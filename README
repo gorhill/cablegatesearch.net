@@ -25,7 +25,7 @@ This website's code has been running on:
 This website's code has been developed on:
 - Apache/2.2.16 (Ubuntu)
 - PHP 5.3.3-1ubuntu9.3
-- MySQL 5.1.49 
+- MySQL 5.1.49
 
 
 FILES
@@ -59,7 +59,7 @@ FILES
 	Documents the addition, modification, deletion of
 	cables by Wikileaks
 
-- browser.php:
+- browse.php:
 	Experimental, not completed, to browse the tags used
 	in the cables
 
