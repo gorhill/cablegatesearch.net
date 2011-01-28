@@ -12,6 +12,7 @@ a[href^="http"] {padding:0 12px 0 0;background:url(external-link.png) center rig
 #navi a,#navi span {margin:0 0.5em;padding:3px 0.5em;color:inherit}
 #navi a:first-child,#navi span:first-child {margin-left:0;padding-left:0}
 #navi a:hover {background:#A68F45;color:#FFFAE8}
+#navi a[href^="http"] {padding:3px 0.5em;background-image:none} /* cancel external link style... */
 #navi span {font-weight:bold}
 #main {padding:2px}
 #intro {font-size:x-small;color:gray}
