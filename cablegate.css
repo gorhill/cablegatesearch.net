@@ -1,0 +1,30 @@
+body {font:normal normal normal 13px/110% sans-serif;letter-spacing:0;word-spacing:0}
+body {margin:0;position:relative}
+body h1:first-child {font:normal small-caps normal 16px sans-serif;margin:0;padding:4px;background-color:#BBCCDD;color:#000}
+body h3 {font:normal small-caps normal 14px sans-serif;margin:1em 0;padding:4px;background-color:#BBCCDD;color:#000}
+div {margin:0}
+a {color:#000;text-decoration:none;opacity:1}
+a:hover {color:#004;opacity:0.8}
+a[href^="http"] {padding:0 12px 0 0;background:url(external-link.png) center right no-repeat}	
+#quote {margin:0;border:1px solid #D3E1EE;border-style:dotted none none none;padding:3px 4px;font:10px sans-serif;color:#495056;background-color:#BBCCDD}
+#quote a {color:inherit}
+#navi {margin:0 0 1em 0;padding:4px 4px;background:#FFF5D5;color:#A68F45;font-size:11px}
+#navi a,#navi span {margin:0 0.5em;padding:3px 0.5em;color:inherit}
+#navi a:first-child,#navi span:first-child {margin-left:0;padding-left:0}
+#navi a:hover {background:#A68F45;color:#FFFAE8}
+#navi span {font-weight:bold}
+#main {padding:2px}
+#intro {font-size:x-small;color:gray}
+#q {width:25em}
+@media screen and (max-width:640px) {
+ #q {width:15em}
+ }
+.toggleHeader {padding:1px 3px;border:1px #9ab;border-style:none none dotted dotted;position:absolute;top:0;right:0;color:#9ab;background-color:transparent;font:smaller sans-serif;cursor:pointer}
+.toggleHeader:hover {color:#000;background-color:#fff}
+#cart-permalink {border:1px solid #aaa;padding:1px;border-radius:2px;font-size:small;background-color:#eee}
+.struck {text-decoration:line-through;}
+.webmaster-comment {color:gray;font-style:italic;font-family:sans-serif;font-size:12px}
+.hilite {padding:0 1px;font-weight:bold;background-color:#ff8}
+.hilite-with-focus {border:1px dotted red;padding:0;font-weight:bold;background-color:#ff8}
+.tip {border:1px solid gray;padding:4px 8px;width:20em;font-size:smaller;background-color:#fffff8;border-radius:10px;-moz-border-radius:10px;}
+#cart-tips {display:none}

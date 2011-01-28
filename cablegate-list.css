@@ -1,0 +1,48 @@
+#cable-list {width:100%;border-collapse:collapse}
+#cable-list tr:first-child {background-color:#d8d8d8}
+#cable-list tr[id^="cableid-"]:nth-child(odd) {background-color:#eaeaea}
+#cable-list tr[id^="cableid-"]:nth-child(even) {background-color:#f8f8f8}
+#cable-list tr[id^="cableid-"]:hover {background:#FFFAE8}
+#cable-list tr[id^="cableid-"].dimmed {display:none;opacity:0.1}
+#cable-list tr[id^="cableid-"].dimmed:hover {opacity:0.25}
+#cable-list th {padding:3px;border:0;border-bottom:1px solid white;vertical-align:top;text-align:left;font-weight:normal;font-size:11px}
+#cable-list td {margin:0;border:0;border-bottom:1px solid white;padding:4px 6px 4px 2px;vertical-align:top}
+#cable-list td:first-child {width:0.25em}
+#cable-list td:first-child + td {width:6em}
+#cable-list tr > th:first-child + th + th + th {font-size:smaller;text-align:right}
+#cable-list tr > td:first-child + td + td + td {width:5em;font-size:smaller;color:#888;text-align:right;white-space:nowrap}
+@media screen and (max-width:640px) {
+ #cable-list tr > th:first-child + th + th + th {display:none}
+ #cable-list tr > td:first-child + td + td + td {display:none}
+ }
+.clu {background:#aaffba}
+.cluc {background:#d4f1b1}
+.clc {background:#ffe4aa}
+.clcs {background:#ffc6aa}
+.cls {background:#ffaaaa}
+#cable-list tr > td:first-child + td {white-space:nowrap}
+#cable-list tr > td:first-child + td + td.expandable {padding:2px 2px 2px 15px;background:transparent url('open.png') no-repeat 2px 4px}
+#cable-list tr > td:first-child + td + td.collapsible {padding:2px 2px 2px 15px;background:transparent url('close.png') no-repeat 2px 4px}
+@media screen and (max-width:640px) {
+ #cable-list tr > td:first-child + td + td.expandable {padding:2px;background:transparent none}
+ #cable-list tr > td:first-child + td + td.collapsible {padding:2px;background:transparent none}
+ }
+#cable-list tr[id^="cableid-"] > td:first-child + td + td {color:#aaa}
+#cable-list tr > td:first-child + td + td > a {font:small-caps 14px sans-serif}
+#cable-list .added,.added:hover {color:#060}
+#cable-list .removed,.removed:hover {color:#800}
+#cable-list tr > td:first-child + td + td > a ~ a {color:#888}
+#cable-list .cable-preview {margin-top:0.2em;border:1px solid #aaa;padding:0;color:#000;background-color:transparent;font-weight:normal}
+#cable-list .cable-preview > div:first-child {border:0;padding:2px 2px 0.25em 2px;font-size:12px;background-color:#def}
+#cable-list .cable-preview > div:first-child > img {vertical-align:middle;cursor:pointer}
+#cable-list .cable-preview > div:first-child > img:hover {opacity:0.75}
+#cable-list .cable-preview > div:first-child + div {height:28em;overflow:auto;background:#fff}
+@media screen and (max-width:480px) {
+ #cable-list .cable-preview > div:first-child + div {height:auto}
+ }
+#cable-list .cable-preview > div:first-child + div > p {margin:0;padding:0.5em 0;white-space:pre-wrap;font-family:'Consolas',monospace}
+@media screen and (max-width:480px) {
+ #cable-list .cable-preview > div:first-child + div > p {white-space:normal;font:11px sans-serif}
+ }
+#cable-list .cable-preview > div:first-child + div > p:first-child {border-bottom:1px dotted #9ab;font-size:10.5px}
+#cable-list .cable-preview > div:first-child + div > p:first-child + p {position:relative}

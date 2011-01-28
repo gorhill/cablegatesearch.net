@@ -1,0 +1,137 @@
+WHAT IS THIS?
+-------------
+
+Here are the files required to set-up a Web site which allows
+full-text search of the Cablegate's cables released by Wikileaks.
+
+These files have been used by http://www.cablegatesearch.net/
+since Dec. 9th as a free service to allow people to easily browse
+the *released* cables.
+
+I consider the code here to be raw and still quite under development,
+and rather untidy and often messy, however, there has been interest
+to maybe reuse the code here in order to create an offline, portable
+full-text search of the cables, hence this early release.
+
+Obviously I will keep working on this code, to make it more tidy,
+better documented, and to introduce optimizations as the number of
+released cables goes up, and performance issues are identified. Etc.
+
+This website's code has been running on:
+- Apache/2.0.52 (CentOS)
+- PHP 5.1.6
+- MySQL 4.1.20
+
+This website's code has been developed on:
+- Apache/2.2.16 (Ubuntu)
+- PHP 5.3.3-1ubuntu9.3
+- MySQL 5.1.49 
+
+
+FILES
+-----
+
+- dbconnect.php:
+	To connect to the MySQL server, this is where
+	you fill in your database name, user id, password.
+
+- cacher.php:
+	Cache management, to save CPU cycles. Can be turned off. There
+	need to be a directory named "cache" with read/write permission
+	for all for the cacher to work properly. This was ported from
+	a previous project, naming is inconsistent, and there are issues
+	to resolve in the current project, particularly, when the database
+	is updated, the cache needs to be flushed manually currently.
+
+- index.php:
+	Redirect to search.php
+
+- search.php:
+	The main web page to launch a full-text search
+
+- cable.php:
+	Web page to display the content of a single cable
+
+- cart.php:
+	A tool to collate and persist a specific set of cables
+
+- history.php:
+	Documents the addition, modification, deletion of
+	cables by Wikileaks
+
+- browser.php:
+	Experimental, not completed, to browse the tags used
+	in the cables
+
+- cablegate-functions.php:
+	contains functions reused across multiple PHP files. It needs
+	cleanup.
+
+- cablegate-do.php:
+	HTTP requests' entry point
+
+- release-notes.php:
+	Release notes, I'm not very good at keeping this up to
+	date.
+
+- globals.php:
+	This file is included by a few PHP files. It's likely going to be replaced
+	soon by a serialized PHP variable useful across many pages on the site.
+
+- globals-generated.php:
+	This file is included by a few PHP files. It's likely going to be replaced
+	soon by a serialized PHP variable generated during the parsing of cables.
+
+- mootools-core-1.3-loader.inc:
+	HTML snippet to load Mootools Core 1.3. I use a proxy loader which requires
+	a key, which is generated according to the domain name cablegatesearch.net.
+	You will have to change this to your own key, or simply load directly
+	mootool-core.js (see http://mootools.net)
+
+- contact-inc.html:
+	Contact, credits, etc. This file is included as footer
+	in the main PHP files.
+
+- CSS files:
+	cablegate.css
+	cablegate-list.css = to be used for list of cables
+	cablegate-cart.css = to be used for cart operations
+
+- Javascript files:
+	cablegate-core.js: common, basic stuff
+	cablegate.js: more stuff (need to restructure these files)
+	cablegate-cart.js: cart management
+	mootools-more.js: Mootools More, for visual effects, date handling, etc.
+
+- cablegate_create.sql:
+	MySQL statements to create the structure of the
+	tables required to run the site
+
+- cablegate.sql.7z:
+	MySQL statements to create the structures of the
+	tables required to run this site, and to fill them with the data
+	of the latest snapshot of released cables. Since this file is
+	way too large to host here, download it from:
+	http://www.cablegatesearch.net/cablegate.sql.7z
+
+- cablegate_cables_canonical2id_map.txt:
+	This is a serialized PHP associative array, which maps
+	"canonical id" (aka Wikileaks' "reference id") to cable id (integer).
+	This file is useful if you want to generate your own database
+	content, as you should preserve the mapping documented in this
+	file. This ensure that carts are really persistent.
+
+- Art files:
+	bookmark-add.png
+	bookmark-del.png
+	bookmark-ghost.png
+	bookmark-info.png
+	bookmark.png
+	close.png
+	open.png
+	go-next.png
+	go-previous.png
+	external-link.png
+	edit-clear-2.png
+
+
