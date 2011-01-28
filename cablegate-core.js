@@ -17,10 +17,6 @@
 			e.store('tip:title','');
 			e.store('tip:text',tipElem.get('html'));
 			});
-		// this and that
-		$$('#navi > *:nth-child(5)').each(function(e){
-			var dummy = new Tips(e,{fixed:true,offset:{x:20,y:24}});
-			});
 		};
 
 	window.addEvent('domready',init);
