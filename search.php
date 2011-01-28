@@ -16,8 +16,6 @@ $cache_id = sprintf('searchpage_%d_%d-%02d_%s', $sort, $yt, $mt, $canonical_quer
 if ( !db_output_compressed_cache($cache_id) ) {
 db_open_compressed_cache($cache_id);
 // -----
-include_once("htmlentities.php");
-
 $prepdata = preprocess_query($raw_query);
 $title = "Cablegate's cables: Full-text search";
 if ( !empty($prepdata['normalized_query']) ) {
@@ -65,7 +63,7 @@ $qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
 <h1><?php echo $title; ?></h1>
 <span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="<?php echo $title, ' #cablegate'; ?>" data-url="http://t.co/OLECRvQ<?php if ( !empty($prepdata['urlencoded_query']) ) { echo "search.php?q={$prepdata['urlencoded_query']}"; } ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
 <div id="quote">&ldquo;All of them, those in power, and those who want the power, would pamper us, if we agreed to overlook their crookedness by wilfully restricting our activities.&rdquo; &mdash; <a href="http://en.wikipedia.org/wiki/Refus_global">&ldquo;Refus Global&ldquo;</a>, <a href="http://en.wikipedia.org/wiki/Paul-%C3%89mile_Borduas">Paul-&Eacute;mile Borduas</a></div>
-<div id="navi"><span>Full-text search</span><a href="browse.php">Browse tags</a><a href="history.php">Release history</a><a href="cart.php">Private cart</a><span style="font-weight:normal" title="Coming soon...">Open sourcing</span></div>
+<div id="navi"><span>Full-text search</span><a href="browse.php">Browse tags</a><a href="history.php">Release history</a><a href="cart.php">Private cart</a><a href="https://github.com/gorhill/cablegatesearch.net">Open sourcing</a></div>
 <div id="main">
 <div id="intro">This site is best viewed using a <a href="http://en.wikipedia.org/wiki/Acid3#Browsers_that_pass">modern, highly-compliant browser</a> <a href="http://acid3.acidtests.org/">(score >= 90)</a><noscript style="color:red">, with Javascript enabled</noscript>. <!--[if lte IE 8]> <span style="color:#c44">Internet Explorer 8 doesn't support all features, visual or otherwise, available on this page.</span> <![endif]-->Database content based on a snapshot of <a href="http://213.251.145.96/cablegate.html">Wikileaks' Cablegate</a> as of <span><?php echo $CABLEGATE_VERSION_DATE; ?></span> (<span class="since"><?php echo $CABLEGATE_VERSION_DATE; ?></span> ago). Other full-text search tools on the web: <a href="http://cablesearch.org/">CableSearch</a>, <a href="https://kabelsearch.org/">KABELS</a>, <a href="http://dazzlepod.com/cable/">dazzelpod</a>.</div>
 <form id="form" method="get" action="search.php">
