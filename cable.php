@@ -111,7 +111,7 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 				$history .= '<span style="color:maroon">Removed';
 				break;
 			}
-		$history .=  ' on ' . date('D, j M Y H:m ',$sqlrow['change_time']) . 'UTC</span>';
+		$history .=  ' on ' . date('D, j M Y H:i',$sqlrow['change_time']) . ' UTC</span>';
 		$num_changes++;
 		}
 	}
