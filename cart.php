@@ -34,7 +34,7 @@ $cache_id = 'cart_' . ($is_guest_cart ? '' : 'p_' ) . sha1($cart);
 if ( !db_output_compressed_cache($cache_id) ) {
 db_open_compressed_cache($cache_id);
 
-include_once("htmlentities.php");
+include_once('cablegate-functions.php');
 
 $cart_type = $is_guest_cart ? 'Public' : 'Private';
 $cart_is_empty = empty($cart);
@@ -128,8 +128,6 @@ $query .= "
 $result = mysql_query($query);
 if (!$result) { exit(mysql_error()); }
 $num_cables = mysql_num_rows($result);
-
-include_once('cablegate-functions.php');
 echo cables2rows($result);
 ?>
 <?php if ($num_cables == 0) { ?>
