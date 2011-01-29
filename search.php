@@ -32,7 +32,7 @@ $qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
 <?php include('cablegate-list.css'); ?>
 #search-tips-toggle {margin:0.5em 0 0 0;display:inline-block;font-size:small;cursor:pointer}
 #search-tips {margin:0;padding:0 0 0 2em;font-size:x-small}
-#graph {border:1px solid #888;background-color:#f4f4f4;font-size:10px}
+#graph {margin-bottom:1em;border:1px solid #888;background-color:#f4f4f4;font-size:10px}
 #graph tr:first-child td {margin:0;border:0;padding:0;width:5px;vertical-align:bottom}
 #graph tr:first-child td:nth-child(4n+1) {border-left:1px solid #ddd}
 #graph tr:first-child a {margin:0;border:0;border-left:1px solid #ddd;padding:0;display:block;width:4px;background-color:#ccc}
