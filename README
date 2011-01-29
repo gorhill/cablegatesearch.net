@@ -107,12 +107,12 @@ FILES
 	MySQL statements to create the structure of the
 	tables required to run the site
 
-- cablegate.sql.7z:
+- cablegate_create_and_populate.sql.7z:
 	MySQL statements to create the structures of the
 	tables required to run this site, and to fill them with the data
 	of the latest snapshot of released cables. Since this file is
-	way too large to host here, download it from:
-	http://www.cablegatesearch.net/cablegate.sql.7z
+	way too large to host here (currently ~20MB), download it from:
+	http://www.cablegatesearch.net/cablegate_create_and_populate.sql.7z
 
 - cablegate_cables_canonical2id_map.txt:
 	This is a serialized PHP associative array, which maps
