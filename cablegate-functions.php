@@ -1,7 +1,6 @@
 <?php
 include_once('cacher.php');
 include_once('globals.php');
-include_once('htmlentities.php');
 
 function header_cache($minutes) {
 	// http://www.sitepoint.com/article/php-anthology-2-5-caching/
