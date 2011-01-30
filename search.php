@@ -46,7 +46,7 @@ $qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
 <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
 <meta name="author" content="Raymond Hill">
 <meta name="keywords" content="cablegate, wikileaks, full, text, search">
-<meta name="description" content="A tool allowing you to perform full-text search and browse the cables leaked by Wikileaks in the Cablegate event">
+<meta name="description" content="A tool allowing you to perform full-text search and browse the leaked cables released by Wikileaks in the Cablegate event">
 <?php include('mootools-core-1.3-loader.inc'); ?>
 <!--[if lte IE 8]>
 <style type="text/css">
