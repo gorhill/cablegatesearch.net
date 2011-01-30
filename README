@@ -68,7 +68,7 @@ FILES
 	cleanup.
 
 - cablegate-do.php:
-	HTTP requests' entry point
+	XMLHttpRequests' entry point
 
 - release-notes.php:
 	Release notes, I'm not very good at keeping this up to
