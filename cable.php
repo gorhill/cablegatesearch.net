@@ -18,13 +18,15 @@ $cache_id = "cable_{$id}";
 if ( !db_output_compressed_cache($cache_id) ) {
 db_open_compressed_cache($cache_id);
 // -----
-$title = 'Cable not found';
-$description = '';
-$canonical_id = '';
 if ( $cable_data = get_cable_content($id) ) {
 	$canonical_id = $cable_data['canonicalId'];
 	$title = sprintf("Cable reference id: %s", htmlentities($canonical_id));
 	$description = htmlentities($cable_data['subject']);
+	}
+else {
+	$title = 'Cable not found';
+	$description = '';
+	$canonical_id = '';
 	}
 
 $hideHeader = isset($_COOKIE['cablegateHideHeaders']) && $_COOKIE['cablegateHideHeaders'] == 'true';
@@ -64,8 +66,7 @@ body {background:white url('background1.png') repeat}
 <body>
 <h1><?php echo $title ?></h1>
 <span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="<?php echo $title; ?>" data-url="http://www.cablegatesearch.net/cable.php?id=<?php echo htmlentities(urlencode($canonical_id)); ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
-<div id="quote">&ldquo;All of them, those in power, and those who want the power, would pamper us, if we agreed to overlook their crookedness by wilfully restricting our activities.&rdquo; &mdash; <a href="http://en.wikipedia.org/wiki/Refus_global">&ldquo;Refus Global&ldquo;</a>, <a href="http://en.wikipedia.org/wiki/Paul-%C3%89mile_Borduas">Paul-&Eacute;mile Borduas</a></div>
-<div id="navi"><a href="search.php">Full-text search</a><a href="browse.php">Browse tags</a><a href="history.php">Release history</a><a href="cart.php">Private cart</a></div>
+<?php include('header.php'); ?>
 <div id="main">
 <?php if ( !empty($canonical_id) ) { ?>
 <div id="cable"><!-- cable -->
@@ -99,12 +100,14 @@ $sqlquery = "
 if ( $sqlresult = mysql_query($sqlquery) ) {
 	$changed_at_least_once = 0;
 	$history_details = array(
-		1 => array('color'=>'darkgreen', 'prompts'=>array('First added','Added again')),
-		     array('color'=>'blue', 'prompts'=>array('Modified','Modified')),
-		     array('color'=>'maroon', 'prompts'=>array('Removed','Removed')),
+		array('color'=>'#000', 'prompts'=>array('','')),
+		array('color'=>'darkgreen', 'prompts'=>array('First added','Added again')),
+		array('color'=>'blue', 'prompts'=>array('Modified','Modified')),
+		array('color'=>'maroon', 'prompts'=>array('Removed','Removed')),
 		);
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$change = (int)$sqlrow['change'];
+		assert($change < count($history_details)-1);
 		$history[] = sprintf(
 			'<span style="color:%s">%s on %s UTC</span>',
 			$history_details[$change]['color'],
