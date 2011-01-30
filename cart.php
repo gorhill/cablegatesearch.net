@@ -75,8 +75,7 @@ if (!$cart_is_empty ) {
 </head>
 <body>
 <h1>Cablegate's cables: <?= $cart_type ?> cart</h1>
-<div id="quote">&ldquo;All of them, those in power, and those who want the power, would pamper us, if we agreed to overlook their crookedness by wilfully restricting our activities.&rdquo; &mdash; <a href="http://en.wikipedia.org/wiki/Refus_global">&ldquo;Refus Global&ldquo;</a>, <a href="http://en.wikipedia.org/wiki/Paul-%C3%89mile_Borduas">Paul-&Eacute;mile Borduas</a></div>
-<div id="navi"><a href="search.php">Full-text search</a><a href="browse.php">Browse tags</a><a href="history.php">Release history</a><span>Private cart</span></div>
+<?php include('header.php'); ?>
 <div id="main">
 <?php if ( !$cart_is_empty ) { ?>
 <span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="Check these cables #cablegate" data-url="http://www.cablegatesearch.net/cart.php<?php echo "?cart=", urlencode($cart); ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span><!-- end twitter -->

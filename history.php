@@ -36,8 +36,7 @@ a.magnet {margin-left:3em;font-size:smaller;color:gray;cursor:pointer}
 </head>
 <body>
 <h1>Cablegate's cables: Release History</h1>
-<div id="quote">&ldquo;All of them, those in power, and those who want the power, would pamper us, if we agreed to overlook their crookedness by wilfully restricting our activities.&rdquo; &mdash; <a href="http://en.wikipedia.org/wiki/Refus_global">&ldquo;Refus Global&ldquo;</a>, <a href="http://en.wikipedia.org/wiki/Paul-%C3%89mile_Borduas">Paul-&Eacute;mile Borduas</a></div>
-<div id="navi"><a href="search.php">Full-text search</a><a href="browse.php">Browse tags</a><span>Release history</span><a href="cart.php">Private cart</a></div>
+<?php include('header.php'); ?>
 <div id="main">
 <div style="font-size:14px">
 <?php

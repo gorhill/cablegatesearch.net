@@ -2,6 +2,7 @@
 <html>
 <head>
 <style type="text/css">
+<?php include('cablegate.css'); ?>
 body {font:normal normal normal 13px/110% sans-serif;letter-spacing:0;word-spacing:0}
 body {margin:0;position:relative}
 body h1:first-child {font:normal small-caps normal 16px sans-serif;margin:0;padding:4px;background-color:#bcd;color:#000}
@@ -19,8 +20,8 @@ a:hover {color:#004;opacity:0.8}
 </head>
 <body>
 <h1>Cablegate's cables: Full-text search engine / Release notes</h1>
+<?php include('header.php'); ?>
 <div id="main">
-<div style="margin-bottom:1em"><div style="font-size:smaller;color:gray">Companion page of <a href="search.php">full-text search</a>.</div> <!-- end intro -->
 <div>
 <ul>
 <li>Jan. 5, 2011<ul>
