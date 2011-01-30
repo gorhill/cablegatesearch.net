@@ -471,10 +471,28 @@ function cables2json($sqlresult) {
 	return $entries;
 	}
 
-function get_cable_entries($raw_query,$sort,$yt,$mt,$offset,$limit) {
+/**
+ * Returns a list of cables as a JSON object.
+ *
+ * @param string $raw_query the raw, possibly unparsed, query
+ * @param int    $sort      the sort order: 0=cable time, reverse
+ *                                          1=release time, reverse
+ * @param int    $yt        the maximum year, cables which cable or
+ *                          release time (according to $sort) are
+ *                          above $yt will not be returned
+ * @param int    $mt        the maximum month, cables which cable or
+ *                          release time (according to $sort) are
+ *                          above $yt-$mt will not be returned
+ * @param int    $offset    how many cable entries to skip
+ * @param int    $limit     the maximum number of cables to return
+ *
+ * @TODO  Avoid using an offset, as per:
+ *        http://www.facebook.com/note.php?note_id=206034210932&id=102841356695
+ */
+
+function get_cable_entries($raw_query, $sort, $yt, $mt, $offset, $limit) {
 	$prepdata = preprocess_query($raw_query);
 	$column_names_lookup_by_sort = array('cable','release');
-	// query for list
 	$sqlquery = sprintf("
 		SELECT DISTINCT
 			c.`id`,
@@ -494,6 +512,11 @@ function get_cable_entries($raw_query,$sort,$yt,$mt,$offset,$limit) {
 		",
 		$prepdata['subquery']
 		);
+	/* 
+	 * When using release time, there is no way yet to specify a
+	 * maximum year-month, so no need to filter according to time
+	 * in such case
+     */
 	if ( !$sort ) {
 		$sqlquery .= sprintf("
 			WHERE
