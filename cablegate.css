@@ -22,7 +22,6 @@ a[href^="http"] {padding:0 12px 0 0;background:url(external-link.png) center rig
  }
 .toggleHeader {padding:1px 3px;border:1px #9ab;border-style:none none dotted dotted;position:absolute;top:0;right:0;color:#9ab;background-color:transparent;font:smaller sans-serif;cursor:pointer}
 .toggleHeader:hover {color:#000;background-color:#fff}
-#cart-permalink {border:1px solid #aaa;padding:1px;border-radius:2px;font-size:small;background-color:#eee}
 .struck {text-decoration:line-through;}
 .webmaster-comment {color:gray;font-style:italic;font-family:sans-serif;font-size:12px}
 .hilite {padding:0 1px;font-weight:bold;background-color:#ff8}
