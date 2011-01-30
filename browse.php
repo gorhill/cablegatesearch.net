@@ -60,8 +60,7 @@ if ( count($stack_of_tags) > 0 ) {
 	echo '?tags=', htmlentities(urlencode($_REQUEST['tags']));
 	}
 ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
-<div id="quote">&ldquo;All of them, those in power, and those who want the power, would pamper us, if we agreed to overlook their crookedness by wilfully restricting our activities.&rdquo; &mdash; <a href="http://en.wikipedia.org/wiki/Refus_global">&ldquo;Refus Global&ldquo;</a>, <a href="http://en.wikipedia.org/wiki/Paul-%C3%89mile_Borduas">Paul-&Eacute;mile Borduas</a></div>
-<div id="navi"><a href="search.php">Full-text search</a><span>Browse tags</span><a href="history.php">Release history</a><a href="cart.php">Private cart</a></div>
+<?php include('header.php'); ?>
 <div id="main">
 <div>
 <p>Under construction. This page allows you to visually appreciate the number of cables for any given tags. Clicking on a particular tag allows you to &ldquo;drill-in&rdquo; and see the number of cables as a result of the intersection with the &ldquo;drilled-in&rdquo; tags.</p>
