@@ -43,6 +43,10 @@ FILES
 	to resolve in the current project, particularly, when the database
 	is updated, the cache needs to be flushed manually currently.
 
+- header.php:
+	The HTML code shared by all web pages, which appears just below
+	the title bar
+
 - index.php:
 	Redirect to search.php
 
@@ -122,6 +126,7 @@ FILES
 	file. This ensure that carts are really persistent.
 
 - Art files:
+	background1.png
 	bookmark-add.png
 	bookmark-del.png
 	bookmark-ghost.png
