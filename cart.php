@@ -50,6 +50,7 @@ $cart_is_empty = empty($cart);
 #export > div:first-child > div {border:1px solid #eee;border-bottom:none;padding:3px;display:inline-block;cursor:pointer}
 #export > div:first-child + div {border:1px solid #eee;padding:0.5em 3px;overflow:auto}
 #export > div:first-child + div > div {white-space:pre;font:12px monospace}
+#cart-permalink {font-size:small;background-color:#eee}
 </style>
 <title>Cablegate's cables: <?= $cart_type ?> cart</title>
 <meta http-equiv="Content-Language" content="en">
@@ -75,18 +76,24 @@ if (!$cart_is_empty ) {
 </head>
 <body>
 <h1>Cablegate's cables: <?= $cart_type ?> cart</h1>
-<?php include('header.php'); ?>
-<div id="main">
 <?php if ( !$cart_is_empty ) { ?>
 <span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="Check these cables #cablegate" data-url="http://www.cablegatesearch.net/cart.php<?php echo "?cart=", urlencode($cart); ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span><!-- end twitter -->
 <?php } ?>
-<div style="margin-bottom:1em"><div style="display:inline-block;width:80%;font-size:smaller;color:gray;vertical-align:top">Still under development. Companion page of <a href="search.php">full-text search</a>.
-</div> <!-- end intro -->
-<?php if (!$is_guest_cart) { ?>
-<p>This page shows the current content of your private cart.</p>
-<p>You can publish, share or keep for future reference the current content of your private cart with this permalink: <input id="cart-permalink" type="text" size="40" readonly="readonly" value="[empty]"> Alternatively, you can use the Tweet button at the top-right corner of this page to share the content of this cart with others on Twitter.</p>
+<?php include('header.php'); ?>
+<div id="main">
+<p style="margin-top:0"><?php if (!$is_guest_cart) { ?>
+This page shows the current content of your private cart.</p>
+<p>You can publish, share or keep for future reference the current content of your private cart with this permalink: <a id="cart-permalink" href="cart.php?cart=<?php echo $cart; ?>">cart.php?cart=<?php
+if ( strlen($cart) > 15 ) {
+	preg_match('/^(...).*(...)$/', $cart, $match);
+	printf("%s...%s", $match[1], $match[2]);
+	}
+else {
+	echo $cart;
+	}
+?></a>.<br>Alternatively, you can use the Tweet button at the top-right corner of this page to share the content of this cart with others on Twitter.</p>
 <?php } else { ?>
-<p>This is a public cart. You can't modify the content of a public cart. <a style="font-weight:bold" href="/cart.php">Click here</a> to view the content of your private cart.</p>
+This is a public cart. You can't modify the content of a public cart.</p>
 <?php } ?>
 <table id="cable-list" cellspacing="0" cellpadding="0">
 <tr><th><th>Cable date<th><a class="cartTogglerInfo" href="/cart.php"></a>Subject &mdash; Origin<th>Leak &lsquo;age&rsquo;
@@ -251,7 +258,11 @@ $$('#export > div:first-child + div > div').each(function(container){
 <?php include('contact-inc.html'); ?>
 </div>
 </div>
-<p id="cart-tips">Removing the <img style="vertical-align:bottom" width="16" height="16" src="bookmark.png" alt="In cart"> from a cable will remove this cable from your <span style="font-weight:bold">private cart</span>.</p>
+<p id="cart-tips"><?php if ( $is_guest_cart ) { ?>
+Marking a cable with <img style="vertical-align:bottom" width="16" height="16" src="bookmark.png" alt="In cart"> will place this cable in your <span style="font-weight:bold">private cart</span>. When viewing your <span style="font-weight:bold">private cart</span>, you can obtain a persistent snapshot of its content, for future reference or to share with others
+<?php } else { ?>
+Removing the <img style="vertical-align:bottom" width="16" height="16" src="bookmark.png" alt="In cart"> from a cable will remove this cable from your <span style="font-weight:bold">private cart</span>
+<?php } ?>.</p>
 </body>
 </html>
 <?php
