@@ -34,18 +34,20 @@ $hideHeader = isset($_COOKIE['cablegateHideHeaders']) && $_COOKIE['cablegateHide
 <style type="text/css">
 <?php include('cablegate-cart.css'); ?>
 <?php include('cablegate.css'); ?>
+body {background:white url('background1.png') repeat}
 #cable-summary {width:100%}
 #cable-summary td {padding:2px 0;vertical-align:top}
 #cable-summary td:first-child {padding-right:1em;width:8em;white-space:nowrap}
 #cable-summary tr > td:first-child {font-weight:bold}
 #cable-summary tr:nth-of-type(8) > td:nth-of-type(2) {font-size:smaller}
 #cable {margin:0;padding:0;max-width:60em}
-#cable > div:first-child {border:1px solid #e8e8e8;border-bottom:none;padding:0.5em;font-size:12px;background-color:#eee}
+#cable > div:first-child {border:1px solid #e8e8e8;border-bottom:none;padding:0.5em;font-size:12px;background-color:#e8e8e8}
 #cable > div:first-child + div {border:1px solid #e8e8e8;border-top:none}
 #cable > div:first-child + div {white-space:pre-line;font-family:'Consolas',monospace}
 #cable > div:first-child + div > div {padding:0.5em}
 #cable > div:first-child + div > div:first-child {border-bottom:1px dotted #9ab;padding-bottom:1em;font-size:10.5px}
 #cable > div:first-child + div > div:first-child + div {padding-top:1em;position:relative}
+#cable-body {background:white}
 .cl-s {color:red}
 .cl-c {color:#e47800}
 </style>
@@ -79,7 +81,7 @@ echo stripos($cable_data['classification'],'secret') !== false ? ' class="cl-s"'
 <tr><td>Source<td><?php echo $cable_data['wikileakURL']; ?>
 <tr><td>Release time<td><?php echo $cable_data['releaseTime']; ?>
 <?php
-$history = '';
+$history = array();
 $sqlquery = "
 	SELECT
 		cr.`release_time` AS `change_time`,
@@ -95,28 +97,25 @@ $sqlquery = "
 		`change_time` ASC
 	";
 if ( $sqlresult = mysql_query($sqlquery) ) {
-	$num_changes = 0;
+	$changed_at_least_once = 0;
+	$history_details = array(
+		1 => array('color'=>'darkgreen', 'prompts'=>array('First added','Added again')),
+		     array('color'=>'blue', 'prompts'=>array('Modified','Modified')),
+		     array('color'=>'maroon', 'prompts'=>array('Removed','Removed')),
+		);
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
-		if ( $num_changes ) {
-			$history .= '<br>';
-			}
-		switch ((int)$sqlrow['change']) {
-			case 1: // add
-				$history .= '<span style="color:darkgreen">' . ($num_changes ? 'Added again' : 'First added');
-				break;
-			case 2: // update
-				$history .= '<span style="color:blue">Modified';
-				break;
-			case 3: // remove
-				$history .= '<span style="color:maroon">Removed';
-				break;
-			}
-		$history .=  ' on ' . date('D, j M Y H:i',$sqlrow['change_time']) . ' UTC</span>';
-		$num_changes++;
+		$change = (int)$sqlrow['change'];
+		$history[] = sprintf(
+			'<span style="color:%s">%s on %s UTC</span>',
+			$history_details[$change]['color'],
+			$history_details[$change]['prompts'][$changed_at_least_once],
+			date('D, j M Y H:i',$sqlrow['change_time'])
+			);
+		$changed_at_least_once = 1;
 		}
 	}
 ?>
-<tr><td>History<td><?php echo $history; ?>
+<tr><td>History<td><?php echo implode('<br>', $history); ?>
 </table>
 </div><!-- end cable summary -->
 <div><!-- cable content --><div id="cable-header"<?php if ($hideHeader) {echo ' style="display:none"';} ?>><!-- header --><?php
