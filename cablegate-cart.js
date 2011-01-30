@@ -115,11 +115,12 @@ if (!CablegateObject) {
 		e = $('cart-permalink');
 		if (e){
 			if (key !== ''){
-				permalink = matches[0] + 'cart.php?cart=' + key;
-				e.value = permalink;
+				e.href = matches[0] + 'cart.php?cart=' + key;
+				e.innerHTML = 'cart.php?cart=' + (key.length > 15 ? key.replace(/^(...).*(...)$/,'$1...$2') : key);
 				}
 			else {
-				e.value = '[empty]';
+				e.href = '#';
+				e.innerHTML = '[empty]';
 				}
 			}
 		};
