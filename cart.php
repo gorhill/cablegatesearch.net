@@ -86,10 +86,10 @@ if (!$cart_is_empty ) {
 <p>This page shows the current content of your private cart.</p>
 <p>You can publish, share or keep for future reference the current content of your private cart with this permalink: <input id="cart-permalink" type="text" size="40" readonly="readonly" value="[empty]"> Alternatively, you can use the Tweet button at the top-right corner of this page to share the content of this cart with others on Twitter.</p>
 <?php } else { ?>
-<p>This is a public cart. You can't modify the content of a public cart. <a style="font-weight:bold" href="cart.php">Click here</a> to view the content of your private cart.</p>
+<p>This is a public cart. You can't modify the content of a public cart. <a style="font-weight:bold" href="/cart.php">Click here</a> to view the content of your private cart.</p>
 <?php } ?>
 <table id="cable-list" cellspacing="0" cellpadding="0">
-<tr><th><th>Cable date<th><a class="cartTogglerInfo" href="cart.php"></a>Subject &mdash; Origin<th>Leak &lsquo;age&rsquo;
+<tr><th><th>Cable date<th><a class="cartTogglerInfo" href="/cart.php"></a>Subject &mdash; Origin<th>Leak &lsquo;age&rsquo;
 <?php
 // build query
 $query = "

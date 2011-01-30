@@ -221,7 +221,7 @@ echo '<tr>', $xaxis_label_html;
 </table>
 <?php } ?>
 <table id="cable-list" cellspacing="0" cellpadding="0">
-<tr><th><th>Cable date<th><a class="cartTogglerInfo" href="cart.php"></a>Subject &mdash; Origin<th>Leak &lsquo;age&rsquo;
+<tr><th><th>Cable date<th><a class="cartTogglerInfo" href="/cart.php"></a>Subject &mdash; Origin<th>Leak &lsquo;age&rsquo;
 <?php
 include_once('cablegate-functions.php');
 echo cables2rows($result);
