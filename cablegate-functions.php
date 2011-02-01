@@ -361,6 +361,7 @@ function get_cable_content($cable_id) {
 			c.`id`,
 			c.`cable_time`,
 			c.`release_time`,
+			c.`change_time`,
 			c.`canonical_id`,
 			c.`status`,
 			o.`origin`,
@@ -396,6 +397,7 @@ function get_cable_content($cable_id) {
 			'origin'=>$row['origin'],
 			'cableTime'=>str_replace(' ','&nbsp;',date('D, j M Y H:i',$row['cable_time'])).'&nbsp;UTC',
 			'releaseTime'=>str_replace(' ','&nbsp;',date('D, j M Y H:i',$row['release_time'])).'&nbsp;UTC',
+			'changeTime'=>str_replace(' ','&nbsp;',date('D, j M Y H:i',$row['change_time'])).'&nbsp;UTC',
 			'classification'=>$row['classification'],
 			'subject'=>$row['subject'],
 			'header'=>$header,
@@ -446,7 +448,7 @@ function cable2row($sqlrow) {
 		cp1252_to_htmlentities($sqlrow['subject']),
 		cp1252_to_htmlentities(urlencode(str_replace(' ','-',$sqlrow['origin']))),
 		cp1252_to_htmlentities($sqlrow['origin']),
-		date('c',$sqlrow['release_time'])
+		date('c',$sqlrow['change_time'])
 		);
 	}
 
@@ -492,13 +494,13 @@ function cables2json($sqlresult) {
 
 function get_cable_entries($raw_query, $sort, $yt, $mt, $offset, $limit) {
 	$prepdata = preprocess_query($raw_query);
-	$column_names_lookup_by_sort = array('cable','release');
+	$column_names_lookup_by_sort = array('cable','change');
 	$sqlquery = sprintf("
 		SELECT DISTINCT
 			c.`id`,
 			c.`canonical_id`,
 			c.`cable_time`,
-			c.`release_time`,
+			c.`change_time`,
 			(c.`status` & 0x01) AS `removed`,
 			(c.`status` & 0x02) AS `new_or_updated`,
 			cl.`classification`,
