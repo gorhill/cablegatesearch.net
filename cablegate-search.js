@@ -238,7 +238,7 @@ if (!CablegateObject) {
 			focus: focusHandler,
 			blur: blurHandler
 			});
-		q.form.addEvent('submit', submitHandler);
+		q.getParent('form').addEvent('submit', submitHandler);
 		};
 
 	window.addEvent('domready', function(){init();});
