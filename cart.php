@@ -65,8 +65,8 @@ if (!$cart_is_empty ) {
 <?php include('mootools-core-1.3-loader.inc'); ?>
 <!--[if lte IE 8]>
 <style type="text/css">
-#cable-list tr > th:first-child + th + th + th {padding:4px 0 0 0;font-size:smaller;text-align:right;width:5.5em;white-space:nowrap}
-#cable-list tr > td:first-child + td + td + td {font-size:smaller;color:#888;text-align:right;white-space:nowrap}
+#cable-list tr > th:first-child + th + th + th {padding:4px 0 0 0;font-size:smaller;text-align:right;white-space:nowrap}
+#cable-list tr > td:first-child + td + td + td {width:5em;font-size:smaller;color:#888;text-align:right;white-space:nowrap}
 </style>
 <![endif]-->
 <script type="text/javascript" src="mootools-more.js"></script>
@@ -85,7 +85,7 @@ if (!$cart_is_empty ) {
 This page shows the current content of your private cart.</p>
 <p>You can publish, share or keep for future reference the current content of your private cart with this permalink: <a id="cart-permalink" href="cart.php?cart=<?php echo $cart; ?>">cart.php?cart=<?php
 if ( strlen($cart) > 15 ) {
-	preg_match('/^(...).*(...)$/', $cart, $match);
+	preg_match('/^(......).*(......)$/', $cart, $match);
 	printf("%s...%s", $match[1], $match[2]);
 	}
 else {
@@ -96,7 +96,7 @@ else {
 This is a public cart. You can't modify the content of a public cart.</p>
 <?php } ?>
 <table id="cable-list" cellspacing="0" cellpadding="0">
-<tr><th><th>Cable date<th><a class="cartTogglerInfo" href="/cart.php"></a>Subject &mdash; Origin<th>Leak &lsquo;age&rsquo;
+<tr><th><th>Cable date<th><a class="cartTogglerInfo" href="/cart.php"></a>Subject &mdash; Origin<th>Updated<br>... ago
 <?php
 // build query
 $query = "
@@ -104,7 +104,7 @@ $query = "
 		c.`id`,
 		c.`canonical_id`,
 		c.`cable_time`,
-		c.`release_time`,
+		c.`change_time`,
 		(c.`status` & 0x01) AS `removed`,
 		(c.`status` & 0x02) AS `new_or_updated`,
 		cl.`classification`,
