@@ -43,69 +43,26 @@ FILES
 	to resolve in the current project, particularly, when the database
 	is updated, the cache needs to be flushed manually currently.
 
-- header.php:
-	The HTML code shared by all web pages, which appears just below
-	the title bar
-
-- index.php:
-	Redirect to search.php
-
-- search.php:
-	The main web page to launch a full-text search
+- browse.php:
+	Experimental, not completed, to browse the tags used
+	in the cables
 
 - cable.php:
 	Web page to display the content of a single cable
 
-- cart.php:
-	A tool to collate and persist a specific set of cables
-
-- history.php:
-	Documents the addition, modification, deletion of
-	cables by Wikileaks
-
-- browse.php:
-	Experimental, not completed, to browse the tags used
-	in the cables
+- cablegate-do.php:
+	XMLHttpRequests' entry point
 
 - cablegate-functions.php:
 	contains functions reused across multiple PHP files. It needs
 	cleanup.
 
-- cablegate-do.php:
-	XMLHttpRequests' entry point
-
-- release-notes.php:
-	Release notes, I'm not very good at keeping this up to
-	date.
-
-- globals.php:
-	This file is included by a few PHP files. It's likely going to be replaced
-	soon by a serialized PHP variable useful across many pages on the site.
-
-- globals-generated.php:
-	This file is included by a few PHP files. It's likely going to be replaced
-	soon by a serialized PHP variable generated during the parsing of cables.
-
-- mootools-core-1.3-loader.inc:
-	HTML snippet to load Mootools Core 1.3. I use a proxy loader which requires
-	a key, which is generated according to the domain name cablegatesearch.net.
-	You will have to change this to your own key, or simply load directly
-	mootool-core.js (see http://mootools.net)
-
-- contact-inc.html:
-	Contact, credits, etc. This file is included as footer
-	in the main PHP files.
-
-- CSS files:
-	cablegate.css
-	cablegate-list.css = to be used for list of cables
-	cablegate-cart.css = to be used for cart operations
-
-- Javascript files:
-	cablegate-core.js: common, basic stuff
-	cablegate.js: more stuff (need to restructure these files)
-	cablegate-cart.js: cart management
-	mootools-more.js: Mootools More, for visual effects, date handling, etc.
+- cablegate_cables_canonical2id_map.txt:
+	This is a serialized PHP associative array, which maps
+	"canonical id" (aka Wikileaks' "reference id") to cable id (integer).
+	This file is useful if you want to generate your own database
+	content, as you should preserve the mapping documented in this
+	file. This ensure that carts are really persistent.
 
 - cablegate_create.sql:
 	MySQL statements to create the structure of the
@@ -118,12 +75,56 @@ FILES
 	way too large to host here (currently ~20MB), download it from:
 	http://www.cablegatesearch.net/cablegate_create_and_populate.sql.7z
 
-- cablegate_cables_canonical2id_map.txt:
-	This is a serialized PHP associative array, which maps
-	"canonical id" (aka Wikileaks' "reference id") to cable id (integer).
-	This file is useful if you want to generate your own database
-	content, as you should preserve the mapping documented in this
-	file. This ensure that carts are really persistent.
+- cart.php:
+	A tool to collate and persist a specific set of cables
+
+- contact-inc.html:
+	Contact, credits, etc. This file is included as footer
+	in the main PHP files.
+
+- header.php:
+	The HTML code shared by all web pages, which appears just below
+	the title bar
+
+- globals.php:
+	This file is included by a few PHP files. It's likely going to be replaced
+	soon by a serialized PHP variable useful across many pages on the site.
+
+- globals-generated.php:
+	This file is included by a few PHP files. It's likely going to be replaced
+	soon by a serialized PHP variable generated during the parsing of cables.
+
+- history.php:
+	Documents the addition, modification, deletion of
+	cables by Wikileaks
+
+- index.php:
+	Redirect to search.php
+
+- release-notes.php:
+	Release notes, I'm not very good at keeping this up to
+	date.
+
+- search.php:
+	The main web page to launch a full-text search
+
+- mootools-core-1.3-loader.inc:
+	HTML snippet to load Mootools Core 1.3. I use a proxy loader which requires
+	a key, which is generated according to the domain name cablegatesearch.net.
+	You will have to change this to your own key, or simply load directly
+	mootool-core.js (see http://mootools.net)
+
+- CSS files:
+	cablegate.css
+	cablegate-list.css = to be used for list of cables
+	cablegate-cart.css = to be used for cart operations
+
+- Javascript files:
+	cablegate.js: more stuff (need to restructure these files)
+	cablegate-cart.js: cart management
+	cablegate-core.js: common, basic stuff
+	cablegate-search.js: list of suggestions for search keyword
+	mootools-more.js: Mootools More, for visual effects, date handling, etc.
 
 - Art files:
 	background1.png
@@ -138,5 +139,3 @@ FILES
 	go-previous.png
 	external-link.png
 	edit-clear-2.png
-
-
