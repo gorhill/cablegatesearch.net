@@ -107,7 +107,7 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 		);
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$change = (int)$sqlrow['change'];
-		assert($change < count($history_details)-1);
+		assert($change < count($history_details));
 		$history[] = sprintf(
 			'<span style="color:%s">%s on %s UTC</span>',
 			$history_details[$change]['color'],
