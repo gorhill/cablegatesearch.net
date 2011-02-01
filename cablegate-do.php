@@ -9,7 +9,7 @@ if (isset($_REQUEST['command'])) {
 
 switch ($command) {
 	case 'get_cable_content':
-		header_cache(60*12);
+		header_cache(60*2);
 		if (!isset($_REQUEST['id']) || !ctype_digit($_REQUEST['id'])) {exit("{}");}
 		$cable_id = (int)$_REQUEST['id'];
 		$cache_id = "cable_preview_{$cable_id}";
@@ -44,6 +44,41 @@ switch ($command) {
 			// -----
 			db_close_compressed_cache();
 			}
+		break;
+
+	case 'get_keyword_suggestions':
+		header_cache(60*12);
+		$startwith = isset($_REQUEST['startwith']) ? utf8_to_cp1252($_REQUEST['startwith']) : '';
+		$answer = array(
+			'startwith' => $startwith,
+			'suggestions' => array()
+			);
+		if ( strlen($startwith) > 1 ) {
+			$limit = isset($_REQUEST['limit']) && ctype_digit($_REQUEST['limit']) ? (int)$_REQUEST['limit'] : 10;
+			$sqlquery = sprintf(
+				"
+				SELECT ct.`term_id`,ct.`term`,COUNT(`cable_id`) AS `numCables`
+				FROM `cablegate_termassoc` cta
+				INNER JOIN (
+					SELECT `id` AS `term_id`,`term`
+					FROM `cablegate_terms` ct
+					WHERE `term` LIKE '%s%%'
+					ORDER BY `term` ASC
+					LIMIT %d
+					) ct
+				ON cta.`term_id` = ct.`term_id`
+				GROUP BY `term_id`
+				",
+				mysql_real_escape_string($startwith),
+				$limit
+				);
+			if ( $sqlresult = mysql_query($sqlquery) ) {
+				while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
+					$answer['suggestions'][] = "{$sqlrow['term']} <span>({$sqlrow['numCables']})</span>";
+					}
+				}
+			}
+		echo json_encode(cp1252_to_utf8($answer));
 		break;
 
 	default:
