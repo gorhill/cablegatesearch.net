@@ -116,7 +116,7 @@ if (!CablegateObject) {
 		if (e){
 			if (key !== ''){
 				e.href = matches[0] + 'cart.php?cart=' + key;
-				e.innerHTML = 'cart.php?cart=' + (key.length > 15 ? key.replace(/^(...).*(...)$/,'$1...$2') : key);
+				e.innerHTML = 'cart.php?cart=' + (key.length > 15 ? key.replace(/^(.{5}).*(.{5})$/,'$1...$2') : key);
 				}
 			else {
 				e.href = '#';
