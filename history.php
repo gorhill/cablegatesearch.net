@@ -40,6 +40,14 @@ a.magnet {margin-left:3em;font-size:smaller;color:gray;cursor:pointer}
 <div id="main">
 <div style="font-size:14px">
 <?php
+// First get number of cables involved
+$sqlquery = "SELECT COUNT(DISTINCT `cable_id`) AS `num_cables` FROM `cablegate_changes`";
+$num_cables = '?';
+if ( $sqlresult = mysql_query($sqlquery) ) {
+	$num_cables = mysql_result($sqlresult,0);
+	}
+
+// Get changes over releases
 $sqlquery = "
 	SELECT
 		cre.`release_time`,
@@ -56,8 +64,7 @@ $sqlquery = "
 			`cablegate_changes` cch
 			ON cre.`release_id` = cch.`release_id`
 			)
-		ON
-		cca.`id` = cch.`cable_id`
+		ON cca.`id` = cch.`cable_id`
 	ORDER BY
 		cre.`release_time` DESC,
 		cca.`canonical_id` DESC
@@ -65,7 +72,7 @@ $sqlquery = "
 if ( $sqlresult = mysql_query($sqlquery) ) {
 	$release_magnets = array();
 	$change_dates = array();
-	printf('<p>%d additions/modifications/deletions.</p><ul class="releases">',mysql_num_rows($sqlresult));
+	printf('<p>%d additions/modifications/deletions concerning %d unique cables.</p><ul class="releases">', mysql_num_rows($sqlresult), $num_cables);
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$change = (int)$sqlrow['change'];
 		$change_time = (int)$sqlrow['release_time'];
