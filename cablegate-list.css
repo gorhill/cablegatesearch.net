@@ -5,7 +5,7 @@
 #cable-list tr[id^="cableid-"]:hover {background:#FFFAE8}
 #cable-list tr[id^="cableid-"].dimmed {display:none;opacity:0.1}
 #cable-list tr[id^="cableid-"].dimmed:hover {opacity:0.25}
-#cable-list th {padding:3px;border:0;border-bottom:1px solid white;vertical-align:top;text-align:left;font-weight:normal;font-size:11px}
+#cable-list th {padding:3px;border:0;border-bottom:1px solid white;vertical-align:top;text-align:left;font-weight:normal;font-size:12px}
 #cable-list td {margin:0;border:0;border-bottom:1px solid white;padding:4px 6px 4px 2px;vertical-align:top}
 #cable-list td:first-child {width:0.25em}
 #cable-list td:first-child + td {width:6em}
