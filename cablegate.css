@@ -16,7 +16,7 @@ a[href^="http"] {padding:0 12px 0 0;background:url(external-link.png) center rig
 #navi span {font-weight:bold}
 #main {padding:2px}
 #intro {font-size:x-small;color:gray}
-#q {width:25em}
+#q {width:25em;z-index:-1}
 @media screen and (max-width:640px) {
  #q {width:15em}
  }
@@ -26,5 +26,5 @@ a[href^="http"] {padding:0 12px 0 0;background:url(external-link.png) center rig
 .webmaster-comment {color:gray;font-style:italic;font-family:sans-serif;font-size:12px}
 .hilite {padding:0 1px;font-weight:bold;background-color:#ff8}
 .hilite-with-focus {border:1px dotted red;padding:0;font-weight:bold;background-color:#ff8}
-.tip {border:1px solid gray;padding:4px 8px;width:20em;font-size:smaller;background-color:#fffff8;border-radius:10px;-moz-border-radius:10px;}
+.tip {border:1px solid gray;padding:4px 8px;width:20em;font-size:smaller;background-color:#fffff8;border-radius:10px;-moz-border-radius:10px}
 #cart-tips {display:none}
