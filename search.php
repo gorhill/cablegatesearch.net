@@ -32,8 +32,8 @@ $qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
 <?php include('cablegate-list.css'); ?>
 #search-suggestions {padding:3px;position:absolute;left:2em;right:2px;background:#DFDDF0;box-shadow:3px 3px 2px #aaa;-moz-box-shadow:3px 3px 2px #aaa;-webkit-box-shadow:3px 3px 2px #aaa;z-index:2}
 #search-suggestions > div {padding:1px;cursor:pointer}
-#search-suggestions > div:hover {background:#FFFAE8}
 #search-suggestions > div > span {color:gray}
+#search-suggestions > .selected {background:#FFFAE8}
 #search-tips-toggle {margin:0.5em 0 0 0;display:inline-block;font-size:small;cursor:pointer}
 #search-tips {margin:0;padding:0 0 0 2em;font-size:x-small}
 #graph {margin-bottom:1em;border:1px solid #888;background-color:#f4f4f4;font-size:10px}
