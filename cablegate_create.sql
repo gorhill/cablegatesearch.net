@@ -57,13 +57,15 @@ CREATE TABLE `cablegate_cables` (
   `origin_id` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `cable_time` int(11) NOT NULL DEFAULT '0',
   `release_time` int(11) NOT NULL DEFAULT '0',
+  `change_time` int(11) NOT NULL DEFAULT '0',
   `md5` varbinary(16) NOT NULL,
   `status` tinyint(4) NOT NULL DEFAULT '0',
   `subject` text NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `canonical_id` (`canonical_id`),
   KEY `cable_time` (`cable_time`),
-  KEY `release_time` (`release_time`)
+  KEY `release_time` (`release_time`),
+  KEY `change_time` (`change_time`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -184,4 +186,4 @@ CREATE TABLE `cablegate_releases` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2011-01-28  8:38:18
+-- Dump completed on 2011-01-31 21:54:58
