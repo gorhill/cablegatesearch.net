@@ -30,6 +30,10 @@ $qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
 <?php include('cablegate.css'); ?>
 <?php include('cablegate-cart.css'); ?>
 <?php include('cablegate-list.css'); ?>
+#search-suggestions {padding:3px;position:absolute;left:2em;right:2px;background:#DFDDF0;box-shadow:3px 3px 2px #aaa;-moz-box-shadow:3px 3px 2px #aaa;-webkit-box-shadow:3px 3px 2px #aaa;z-index:2}
+#search-suggestions > div {padding:1px;cursor:pointer}
+#search-suggestions > div:hover {background:#FFFAE8}
+#search-suggestions > div > span {color:gray}
 #search-tips-toggle {margin:0.5em 0 0 0;display:inline-block;font-size:small;cursor:pointer}
 #search-tips {margin:0;padding:0 0 0 2em;font-size:x-small}
 #graph {margin-bottom:1em;border:1px solid #888;background-color:#f4f4f4;font-size:10px}
@@ -50,12 +54,13 @@ $qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
 <?php include('mootools-core-1.3-loader.inc'); ?>
 <!--[if lte IE 8]>
 <style type="text/css">
-#cable-list tr > th:first-child + th + th + th {padding:4px 0 0 0;font-size:smaller;text-align:right;width:5.5em;white-space:nowrap}
-#cable-list tr > td:first-child + td + td + td {font-size:smaller;color:#888;text-align:right;white-space:nowrap}
+#cable-list tr > th:first-child + th + th + th {padding:4px 0 0 0;font-size:smaller;text-align:right;white-space:nowrap}
+#cable-list tr > td:first-child + td + td + td {width:5em;font-size:smaller;color:#888;text-align:right;white-space:nowrap}
 </style>
 <![endif]-->
 <script type="text/javascript" src="mootools-more.js"></script>
 <script type="text/javascript" src="cablegate-core.js"></script>
+<script type="text/javascript" src="cablegate-search.js"></script>
 <script type="text/javascript" src="cablegate-cart.js"></script>
 <script type="text/javascript" src="cablegate.js"></script>
 </head>
@@ -67,7 +72,7 @@ $qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
 <div id="intro">This site is best viewed using a <a href="http://en.wikipedia.org/wiki/Acid3#Browsers_that_pass">modern, highly-compliant browser</a> <a href="http://acid3.acidtests.org/">(score >= 90)</a><noscript style="color:red">, with Javascript enabled</noscript>. <!--[if lte IE 8]> <span style="color:#c44">Internet Explorer 8 doesn't support all features, visual or otherwise, available on this page.</span> <![endif]-->Database content based on a snapshot of <a href="http://213.251.145.96/cablegate.html">Wikileaks' Cablegate</a> as of <span><?php echo $CABLEGATE_VERSION_DATE; ?></span> (<span class="since"><?php echo $CABLEGATE_VERSION_DATE; ?></span> ago). Other full-text search tools on the web: <a href="http://cablesearch.org/">CableSearch</a>, <a href="https://kabelsearch.org/">KABELS</a>, <a href="http://dazzlepod.com/cable/">dazzelpod</a>.</div>
 <form id="form" method="get" action="search.php">
 <div style="margin-top:1em">
-<span style="margin:0 2em 0 0;display:inline-block;position:relative;vertical-align:top">Keyword(s)<br><input id="q" type="text" value="<?php echo htmlentities($raw_query); ?>" name="q" maxlength="100"><span id="qexpressions" style="display:none"><?php echo $qexpressions; ?></span><img id="clear-q" style="position:absolute;bottom:4px;right:4px;visibility:<?php echo empty($prepdata['normalized_query']) ? 'hidden' : 'visible'; ?>;z-index:1" src="edit-clear-2.png" width="16" height="16" alt="Reset" title="Reset query/results"></span><span style="margin:0 2em 0 0;display:inline-block;vertical-align:top">Sort by...<br><input type="radio" name="sort" value="0"<?php if (!$sort) { echo ' checked="checked"'; } ?>>Cable date<br><input type="radio" name="sort" value="1"<?php if ($sort) { echo ' checked="checked"'; } ?>>Leak date</span><span style="display:inline-block;vertical-align:top">&nbsp;<br><input type="submit" value="Retrieve" style="width:6em"></span>
+<div style="margin:0 1em 0 0;display:inline-block;position:relative;vertical-align:top">Keyword(s)<br><input id="q" type="text" value="<?php echo htmlentities($raw_query); ?>" name="q" maxlength="100"><div id="search-suggestions" style="display:none"></div><span id="qexpressions" style="display:none"><?php echo $qexpressions; ?></span><img id="clear-q" style="position:absolute;bottom:4px;right:4px;visibility:<?php echo empty($prepdata['normalized_query']) ? 'hidden' : 'visible'; ?>" src="edit-clear-2.png" width="16" height="16" alt="Reset" title="Reset query/results"></div><span style="margin:0 2em 0 0;display:inline-block;vertical-align:top"><br><input type="submit" value="Retrieve" style="width:6em"></span>&nbsp;<span style="display:inline-block;vertical-align:top">Sort by...<br><input type="radio" name="sort" value="0"<?php if (!$sort) { echo ' checked="checked"'; } ?>>Cable date<br><input type="radio" name="sort" value="1"<?php if ($sort) { echo ' checked="checked"'; } ?>>Leak date</span>
 </div>
 </form>
 <div id="search-tips-toggle">Search tips...</div><ul id="search-tips">
@@ -81,14 +86,14 @@ $qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
 <div style="margin:1em 0 1em 0;border-top:1px solid #aaa;height:1px"></div>
 <?php
 // query for list
-$column_names_lookup_by_sort = array('cable','release');
+$column_names_lookup_by_sort = array('cable','change');
 
 $query = sprintf("
 	SELECT SQL_CALC_FOUND_ROWS
 		c.`id`,
 		c.`canonical_id`,
 		c.`cable_time`,
-		c.`release_time`,
+		c.`change_time`,
 		(c.`status` & 0x01) AS `removed`,
 		(c.`status` & 0x02) AS `new_or_updated`,
 		cl.`classification`,
@@ -124,7 +129,7 @@ $query .= sprintf("
 	$column_names_lookup_by_sort[$sort ^ 1]
 	);
 // printf("<p>%s</p>", $query);
-// EXPLAIN SELECT SQL_CALC_FOUND_ROWS c.`id`, c.`canonical_id`, c.`cable_time`, c.`release_time`, (c.`status` & 0x01) AS `removed`, (c.`status` & 0x02) AS `new_or_updated`, cl.`classification`, o.`origin`, c.`subject` FROM `cablegate_classifications` cl INNER JOIN (`cablegate_origins` o INNER JOIN (`cablegate_cables` c INNER JOIN (SELECT `cable_id` FROM (SELECT a.`cable_id` FROM (SELECT DISTINCT `cable_id` FROM `cablegate_termassoc` ta INNER JOIN `cablegate_terms` t ON t.id = ta.term_id WHERE t.`term` LIKE 'oil%') a INNER JOIN (SELECT DISTINCT `cable_id` FROM `cablegate_termassoc` ta INNER JOIN `cablegate_terms` t ON t.id = ta.term_id WHERE t.`term` LIKE 'bush%') b ON a.`cable_id` = b.`cable_id`) a) t ON t.cable_id = c.`id`) ON o.`id` = c.`origin_id`) ON cl.`id` = c.`classification_id` ORDER BY c.`release_time` DESC, c.`cable_time` DESC LIMIT 100 
+// EXPLAIN SELECT SQL_CALC_FOUND_ROWS c.`id`, c.`canonical_id`, c.`cable_time`, c.`change_time`, (c.`status` & 0x01) AS `removed`, (c.`status` & 0x02) AS `new_or_updated`, cl.`classification`, o.`origin`, c.`subject` FROM `cablegate_classifications` cl INNER JOIN (`cablegate_origins` o INNER JOIN (`cablegate_cables` c INNER JOIN (SELECT `cable_id` FROM (SELECT a.`cable_id` FROM (SELECT DISTINCT `cable_id` FROM `cablegate_termassoc` ta INNER JOIN `cablegate_terms` t ON t.id = ta.term_id WHERE t.`term` LIKE 'oil%') a INNER JOIN (SELECT DISTINCT `cable_id` FROM `cablegate_termassoc` ta INNER JOIN `cablegate_terms` t ON t.id = ta.term_id WHERE t.`term` LIKE 'bush%') b ON a.`cable_id` = b.`cable_id`) a) t ON t.cable_id = c.`id`) ON o.`id` = c.`origin_id`) ON cl.`id` = c.`classification_id` ORDER BY c.`change_time` DESC, c.`cable_time` DESC LIMIT 100 
 $result = mysql_query($query);
 if (!$result) { exit(mysql_error()); }
 $num_cables = mysql_num_rows($result);
@@ -221,7 +226,7 @@ echo '<tr>', $xaxis_label_html;
 </table>
 <?php } ?>
 <table id="cable-list" cellspacing="0" cellpadding="0">
-<tr><th><th>Cable date<th><a class="cartTogglerInfo" href="/cart.php"></a>Subject &mdash; Origin<th>Leak &lsquo;age&rsquo;
+<tr><th><th>Cable date<th><a class="cartTogglerInfo" href="/cart.php"></a>Subject &mdash; Origin<th>Updated<br>... ago
 <?php
 include_once('cablegate-functions.php');
 echo cables2rows($result);
