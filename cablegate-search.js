@@ -14,13 +14,6 @@ if (!CablegateObject) {
 	co.suggestionCache = {};
 	co.suggestionSelected = -1;
 
-	var suggestionsRequestHandler = function(response) {
-		if (response.suggestions && response.suggestions.length) {
-			co.suggestionCache[response.startwith] = response.suggestions;
-			}
-		syncSuggestions();
-		};
-
 	// Returns the content of the input field as an
 	// alternate list of word and non-word segments,
 	// and which segment is in contact with the caret.
@@ -62,6 +55,18 @@ if (!CablegateObject) {
 	// Return list of suggestions at caret position.
 	// Can be asynchronous if the list of suggestions is
 	// not readily available.
+	var suggestionsRequestHandler = function(response) {
+		if (response.suggestions && response.suggestions.length) {
+			co.suggestionCache[response.startwith] = response.suggestions;
+			}
+		syncSuggestions();
+		};
+
+	var suggestionsRequest = new Request.JSON({
+		url:'cablegate-do.php',
+		onSuccess: suggestionsRequestHandler
+		});
+
 	var getSuggestions = function() {
 		var startwith,
 			details = getInputFieldDetails(),
@@ -80,16 +85,10 @@ if (!CablegateObject) {
 			}
 
 		// Nope, will have to get it from server
-		var options = {
-			url:'cablegate-do.php',
-			onSuccess: suggestionsRequestHandler
-			};
-		var parms = {
+		suggestionsRequest.get({
 			command: 'get_keyword_suggestions',
-			startwith: startwith,
-			limit: 10
-			};
-		var dummy = new Request.JSON(options).get(parms);
+			startwith: startwith
+			});
 
 		return [];
 		};
