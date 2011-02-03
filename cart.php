@@ -180,7 +180,7 @@ while ( $sqlrow = mysql_fetch_assoc($result) ) {
 <div><?php
 // html a tag list
 foreach ( $cables as $cable ) {
-	printf("&lt;a href=&quot;%s&quot;&gt;%s: %s&lt;/a&gt;&lt;br /&gt;\n", $cable['url'], $cable['canonical_id'], $cable['subject']);
+	printf("&lt;a href=&quot;%s&quot;&gt;%s: %s&lt;/a&gt;\n", $cable['url'], $cable['canonical_id'], $cable['subject']);
 	}
 ?>
 </div>
