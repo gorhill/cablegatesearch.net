@@ -12,6 +12,8 @@ a:hover {color:#004;opacity:0.8}
 #main {padding:2px}
 #intro {font-size:x-small;color:gray}
 </style>
+<?php include('mootools-core-1.3-loader.inc'); ?>
+<script type="text/javascript" src="cablegate-core.js"></script>
 <title>Cablegate's cables: Full-text search engine / Release notes</title>
 <meta http-equiv="Content-Language" content="en">
 <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
@@ -24,6 +26,9 @@ a:hover {color:#004;opacity:0.8}
 <div id="main">
 <div>
 <ul>
+<li>Jan. 31, 2011<ul>
+ <li>Added list of suggestions to input field in search.php.
+ </ul>
 <li>Jan. 5, 2011<ul>
  <li>The Cablegate full-text search tool now moved to its dedicated domain name: <a href="http://www.cablegatesearch.net/">cablegatesearch.net</a>.
  </ul>
@@ -46,15 +51,6 @@ a:hover {color:#004;opacity:0.8}
 </div>
 <?php include('contact-inc.html'); ?>
 </div><!-- end main -->
-<script type="text/javascript">
-<!-- 
-var em=document.getElementById('mangled-email');
-if (em){
-	var emtxt='ten.hcraesetagelbac@retsambew'.split('').reverse().join('');
-	em.href='mailto:'+emtxt+'?subject=Cablegate: full-text search';
-	em.innerHTML=emtxt;
-	}
-// -->
-</script>
+<p id="cart-tips">Marking a cable with <img style="vertical-align:bottom" width="16" height="16" src="bookmark.png" alt="In cart"> will place this cable in your <span style="font-weight:bold">private cart</span>. When viewing your <span style="font-weight:bold">private cart</span>, you can obtain a persistent snapshot of its content, for future reference or to share with others.</p>
 </body>
 </html>
