@@ -5,7 +5,7 @@
 		// email
 		e=$('mangled-email');
 		if (e){
-			text='ten.hcraesetagelbac@retsambew'.split('').reverse().join('');
+			text='ten.hcraesetagelbac@llihr'.split('').reverse().join('');
 			e.href='mailto:'+text+'?subject=Cablegate: full-text search';
 			e.set('text',text);
 			}
