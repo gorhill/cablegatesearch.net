@@ -56,7 +56,7 @@ if (!CablegateObject) {
 	// Can be asynchronous if the list of suggestions is
 	// not readily available.
 	var suggestionsRequestHandler = function(response) {
-		if (response.suggestions && response.suggestions.length) {
+		if (response.suggestions && response.startwith.length) {
 			co.suggestionCache[response.startwith] = response.suggestions;
 			}
 		syncSuggestions();
