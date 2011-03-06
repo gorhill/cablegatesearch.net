@@ -1,24 +1,60 @@
 <?php
-include_once("globals-generated.php");
 include_once("dbconnect.php");
 
 // TODO: make it into a class
 
-$CACHER_EXCLUDE_IPS_REGEX = '/^(127\\.0\\.\\d+\\.\\d+)$/';
+$CACHER_EXCLUDE_IPS_REGEX = '';
 $CACHER_DISABLED = false;
-$CACHER_MAXITEMS_LO = 1900;
-$CACHER_MAXITEMS_HI = 2000;
-
+$CACHER_MAXITEMS_LO = 2900;
+$CACHER_MAXITEMS_HI = 3000;
 $CACHE_HANDLE = false;
 $CACHE_DIR = $_SERVER['DOCUMENT_ROOT'] . '/cache/';
 
-/*****************************************************************************
-Cached output functions
-*/
+/**
+
+ Cached output functions
+
+ */
+
+function cache_normalize_id($cache_id) {
+	if ( strlen($cache_id) > 100 ) {
+		return md5($cache_id);
+		}
+	return $cache_id;
+	}
+
+function cache_get_sentinel_time() {
+	global $CACHE_DIR;
+	$sentinel_path = "{$CACHE_DIR}cache_sentinel";
+	if ( $sentinel_time = @filemtime($sentinel_path) ) {
+		return $sentinel_time;
+		}
+	@touch($sentinel_path);
+	return time();
+	}
+
+function cache_store($cache_id, $content) {
+	global $CACHE_DIR;
+	$cache_path = $CACHE_DIR . cache_normalize_id($cache_id);
+	return file_put_contents($cache_path, $content);
+	}
+
+function cache_retrieve($cache_id) {
+	global $CACHE_DIR;
+	$cache_path = $CACHE_DIR . cache_normalize_id($cache_id);
+	$cache_time = @filemtime($cache_path);
+	if ( !$cache_time ) {
+		return false;
+		}
+	if ( $cache_time <= cache_get_sentinel_time() ) {
+		return false;
+		}
+	return file_get_contents($cache_path);
+	}
 
 function cache_id_to_fullpath($cache_id) {
 	global $CACHE_DIR;
-	return 	$CACHE_DIR . $cache_id . '.blob';
+	return 	$CACHE_DIR . cache_normalize_id($cache_id) . '.gz';
 	}
 
 function db_cancel_cache() {
@@ -31,10 +67,13 @@ function db_cancel_cache() {
 function db_open_compressed_cache($cache_id) {
 	global $CACHER_EXCLUDE_IPS_REGEX;
 	global $CACHER_DISABLED;
-	global $CACHE_HANDLE;
 	global $CACHE_DIR;
-	if ( $CACHE_HANDLE ) exit('db_open_compressed_cache(): fatal error, recursivity not allowed');
-	// dont cache if cache id too long
+	global $CACHE_HANDLE;
+
+	if ( $CACHE_HANDLE ) {
+		exit('db_open_compressed_cache(): fatal error, recursivity not allowed');
+		}
+	// dont cache if cache disable
 	if ( $CACHER_DISABLED ) {
 		return;
 		}
@@ -72,19 +111,23 @@ function db_close_compressed_cache() {
 	@touch($fullpath);
 	$CACHE_HANDLE = false;
 	// limit number of cache files
-	if ( !(time() & 31) ) {
+	if ( !(time() & 63) ) {
 		$cache_files = @scandir($CACHE_DIR);
 		$num_cache_files = count($cache_files);
 		if ( $num_cache_files > $CACHER_MAXITEMS_HI ) {
 			$sorted_cache_files = array();
 			foreach ( $cache_files as $cache_file ) {
-				$sorted_cache_files[(string)@filemtime($CACHE_DIR.$cache_file).$cache_file] = $cache_file;
+				if ( $cache_file === 'cache_sentinel' ) {
+					continue;
+					}
+				$sorted_cache_files[strval(@filemtime($CACHE_DIR.$cache_file)).$cache_file] = $cache_file;
 				}
 			ksort($sorted_cache_files);
-			reset($sorted_cache_files);
-			for ( ; --$num_cache_files > $CACHER_MAXITEMS_LO; ) {
-				$cache_file_entry = each($sorted_cache_files);
-				@unlink($CACHE_DIR.$cache_file_entry[1]);
+			foreach ( $sorted_cache_files as $cache_file_entry ) {
+				@unlink($CACHE_DIR.$cache_file_entry);
+				if ( --$num_cache_files <= $CACHER_MAXITEMS_LO ) {
+					break;
+					}
 				}
 			}
 		}
@@ -111,20 +154,18 @@ function db_close_compressed_cache() {
 		}
 	}
 
-function db_get_compressed_cache($cache_id,$maxSeconds=0) {
-	global $CABLEGATE_DATABASE_LAST_MODIFIED;
-
+function db_get_compressed_cache($cache_id, $maxSeconds=0) {
 	$fullpath = cache_id_to_fullpath($cache_id);
 	if ( !($gzip_content = @file_get_contents($fullpath)) ) {
 		return null;
 		}
-	$update_time = @filemtime($fullpath) + 1000*61;
+	$update_time = @filemtime($fullpath);
 	// use cache only if entry not expired
 	if ( $maxSeconds > 0 && $maxSeconds < (time()-$update_time) ) {
 		return null;
 		}
 	// use cache only if dependency(ies) are older than cache
-	if ( $update_time <= $CABLEGATE_DATABASE_LAST_MODIFIED ){
+	if ( $update_time <= cache_get_sentinel_time() ){
 		return null;
 		}
 	return $gzip_content;
