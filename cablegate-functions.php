@@ -143,16 +143,13 @@ function array_flatten($a) {
 
 function preprocess_query($raw_query) {
 	$canonical_query_name = get_canonical_query_name($raw_query);
+
 	// get preprocess data for this query
 	$preprocessed = false;
-	$preprocessed_fname = sprintf('./cache/preproc_%s.txt', $canonical_query_name);
-	if (file_exists($preprocessed_fname)) {
-		if ($s = file_get_contents($preprocessed_fname)) {
-			$preprocessed = unserialize($s);
-			}
-		}
-	if ( $preprocessed ) {
-		return $preprocessed;
+	$preprocessed_fname = sprintf('preproc_%s.txt', $canonical_query_name);
+
+	if ( $s = cache_retrieve($preprocessed_fname) ) {
+		return unserialize($s);
 		}
 
 	list($normalized_query,$urlencoded_query,$expressions) = parse_raw_query($raw_query);
@@ -304,7 +301,7 @@ function preprocess_query($raw_query) {
 */
 	// save preprocessed data only if not a bot
 	if (!db_referrer_is_a_bot()) {
-		file_put_contents($preprocessed_fname,serialize($preprocessed));
+		cache_store($preprocessed_fname, serialize($preprocessed));
 		}
 
 	return $preprocessed;
@@ -347,16 +344,35 @@ function cp1252_to_htmlentities($v) {
 	}
 
 function webmaster_comment_to_link($matches) {
-	return sprintf('<a class="webmaster-comment" href="search.php?q=%s" rel="nofollow">&thinsp;[%s]</a>',htmlentities(urlencode(preg_replace('/[\\W_]+/','-',$matches[1]))),htmlentities($matches[1]));
+	return sprintf(
+		'<a class="webmaster-comment" href="search.php?q=%s" rel="nofollow">&thinsp;[%s]</a>',
+		htmlentities(urlencode(preg_replace('/[\\W_]+/', '-', $matches[1]))),
+		htmlentities($matches[1])
+		);
 	}
 
-function get_cable_content($cable_id) {
+/**
+ * Returns the details and content of a cable as a JSON object.
+ *
+ * @param mixed  $cable_id
+ *     canonical id (string) or datbase id (integer)
+ * @param int    $cable_version
+ *     which version to return. If 0, return plain text
+ *     of latest version, otherwise returns diff between
+ *     the specified version and first, original version
+ *     (if the cable is deemed sensitive no diff is
+ *     returned) (see cablegate-diff-granter.php script)
+ */
+
+function get_cable_content($cable_id, $cable_version = 0) {
 	global $CABLE_CONTENT_SEPARATOR;
 	if ( is_string($cable_id) && !ctype_digit($cable_id) ) {
 		$canonical_id = $cable_id;
 		}
-	$content = "Error: Couldn't get cable content.";
-	$sqlquery = "
+
+	// get cable details
+	$sqlquery = sprintf(
+		"
 		SELECT
 			c.`id`,
 			c.`cable_time`,
@@ -366,8 +382,7 @@ function get_cable_content($cable_id) {
 			c.`status`,
 			o.`origin`,
 			cl.`classification`,
-			c.`subject`,
-			UNCOMPRESS(co.`content`) AS `content`
+			c.`subject`
 		FROM `cablegate_contents` co
 			INNER JOIN (`cablegate_origins` o
 			INNER JOIN (`cablegate_classifications` cl
@@ -376,71 +391,126 @@ function get_cable_content($cable_id) {
 			ON o.`id` = c.`origin_id`)
 			ON co.`id` = c.`id`
 		WHERE
+			%s
+		",
+		isset($canonical_id)
+			? sprintf("c.`canonical_id`='%s'", mysql_real_escape_string($canonical_id))
+			: "c.`id`={$cable_id}"
+		);
+
+	if ( !($sqlresult = mysql_query($sqlquery)) || !($sqlrow = mysql_fetch_assoc($sqlresult))) {
+		return false;
+		}
+
+	$date_details = getdate($sqlrow['cable_time']);
+	$wikileaksURL = sprintf('http://213.251.145.96/cable/%d/%02d/%s.html',
+		$date_details['year'],
+		$date_details['mon'],
+		urlencode($sqlrow['canonical_id'])
+		);
+
+	$answer = array(
+		'id' => $sqlrow['id'],
+		'canonicalId' => $sqlrow['canonical_id'],
+		'cableURL' => sprintf('<a target="_blank" href="cable.php?id=%s">%s</a>',urlencode($sqlrow['canonical_id']),$sqlrow['canonical_id']),
+		'wikileakURL' => sprintf('<a target="_blank" href="%s">%s</a>',$wikileaksURL,htmlentities($wikileaksURL)),
+		'origin' => $sqlrow['origin'],
+		'cableTime' => str_replace(' ','&nbsp;',date('D, j M Y H:i',$sqlrow['cable_time'])).'&nbsp;UTC',
+		'releaseTime' => str_replace(' ','&nbsp;',date('D, j M Y H:i',$sqlrow['release_time'])).'&nbsp;UTC',
+		'changeTime' => str_replace(' ','&nbsp;',date('D, j M Y H:i',$sqlrow['change_time'])).'&nbsp;UTC',
+		'classification' => $sqlrow['classification'],
+		'status' => (int)$sqlrow['status'],
+		'subject'=>$sqlrow['subject'],
+		'header' => '',
+		'content' => ''
+		);
+
+	// determine whether diff can be seen
+	$showdiff = $cable_version !== 0;
+	$sensitive = $showdiff && !($answer['status'] & 0x04);
+//	if ( $sensitive && !preg_match('/^(127\\.0\\.\\d+\\.\\d+)$/', $_SERVER["REMOTE_ADDR"]) ) {
+//		$answer['content'] = '<span class="webmaster-comment">[Edit history of this cable is withheld. At least one redaction which consists of a blacked out passage has been detected in a later release.]</span>';
+//		return $answer;
+//		}
+
+	// get cable content
+	if ( !$cable_version ) {
+		$cable_version = PHP_INT_MAX;
+		}
+	$sqlquery = "
+		SELECT
+			re.`release_time`,
+			ch.change,
+			UNCOMPRESS(ch.`diff`) AS `diff`
+		FROM `cablegate_releases` re
+			INNER JOIN `cablegate_changes` ch
+			ON re.`release_id` = ch.`release_id`
+		WHERE
+			ch.`cable_id` = {$answer['id']}
+		ORDER BY
+			re.`release_time` ASC
 		";
-	$sqlquery .= isset($canonical_id) ? sprintf("c.`canonical_id`='%s'",mysql_real_escape_string($canonical_id)) : "c.`id`={$cable_id}";
-	if (($result = mysql_query($sqlquery)) && ($row = mysql_fetch_assoc($result))) {
-		$date_details = getdate($row['cable_time']);
-		$wikileaksURL = sprintf('http://213.251.145.96/cable/%d/%02d/%s.html',$date_details['year'],$date_details['mon'],urlencode($row['canonical_id']));
-		list($header,$body) = explode($CABLE_CONTENT_SEPARATOR,$row['content']);
-		// cable was dropped from latest release
-		if ($row['status'] & 1) {
-			$body = '<span class="webmaster-comment">[Removed from an earlier Cablegate release]</span>' . "\n\n" . $body;
+	$sqlresult = mysql_query($sqlquery);
+	if ( !$sqlresult ) {
+		return $answer;
+		}
+
+	include('finediff.php');
+
+	// expand content
+	//$start_time = gettimeofday(true);
+	$last_not_empty = 0;
+	$diff_stack = array();
+	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
+		if ( (int)$sqlrow['release_time'] > $cable_version ) {
+			break;
 			}
-		// webmaster comment => link + specific styles:
-		//  tags
-		$body = preg_replace_callback('/ \\[\\[(.+?)\\]\\]/','webmaster_comment_to_link',$body);
-		return array(
-			'id'=>$row['id'],
-			'canonicalId'=>$row['canonical_id'],
-			'cableURL'=>sprintf('<a target="_blank" href="cable.php?id=%s">%s</a>',urlencode($row['canonical_id']),$row['canonical_id']),
-			'wikileakURL'=>sprintf('<a target="_blank" href="%s">%s</a>',$wikileaksURL,htmlentities($wikileaksURL)),
-			'origin'=>$row['origin'],
-			'cableTime'=>str_replace(' ','&nbsp;',date('D, j M Y H:i',$row['cable_time'])).'&nbsp;UTC',
-			'releaseTime'=>str_replace(' ','&nbsp;',date('D, j M Y H:i',$row['release_time'])).'&nbsp;UTC',
-			'changeTime'=>str_replace(' ','&nbsp;',date('D, j M Y H:i',$row['change_time'])).'&nbsp;UTC',
-			'classification'=>$row['classification'],
-			'subject'=>$row['subject'],
-			'header'=>$header,
-			'content'=>$body
-			);
-		}
-	return false;
-	}
+		list($header, $content) = explode($CABLE_CONTENT_SEPARATOR, $sqlrow['diff']);
 
-function elapsed_hours_from_date($datestr) {
-	$then = strtotime($datestr . '+0000'); // mysql knowns no tz
-	return (int)((time() - $then) / 3600 + 0.5);
-	}
+		if ( !preg_match('/^d\\d+$/', $content) ) {
+			$last_not_empty = count($diff_stack);
+			}
+		$diff_stack[] = array($header, $content);
+		}
 
-function string_from_elapsed_hours($hours) {
-	if ( $hours < 1 ) {
-		return "< 1 hour";
+	$header = $content = '';
+	if ( count($diff_stack) > 0 ) {
+		$header = FineDiff::renderToTextFromOpcodes('', $diff_stack[0][0]);
+		$content = FineDiff::renderToTextFromOpcodes('', $diff_stack[0][1]);
 		}
-	if ( $hours == 1 ) {
-		return "1 hour";
+	$last_diff_index = count($diff_stack) - 1;
+
+	if ( $last_diff_index > 0 ) {
+		if ( $showdiff ) {
+			// 08STATE56861 = 10 ms = 25 ms <= 160 ms <= 690-710 ms <= 875 ms <= 1400 ms <= 2300 ms
+			$header = FineDiff::renderDiffToHTMLFromOpcodes($header, $diff_stack[$last_diff_index][0]);
+			$content = FineDiff::renderDiffToHTMLFromOpcodes($content, $diff_stack[$last_diff_index][1]);
+			}
+		else {
+			$header = FineDiff::renderToTextFromOpcodes($header, $diff_stack[min($last_diff_index, $last_not_empty)][0]);
+			$content = FineDiff::renderToTextFromOpcodes($content, $diff_stack[min($last_diff_index, $last_not_empty)][1]);
+			}
 		}
-	if ( $hours < 48 ) {
-		return "{$hours} hours";
-		}
-	$days = (int)($hours / 24 + 0.5);
-	if ( $days < 30 ) {
-		return "{$days} days";
-		}
-	$weeks = (int)($days / 7 + 0.5);
-	if ( $weeks < 8 ) {
-		return "{$weeks} weeks";
-		}
-	$months = (int)($weeks / 4 + 0.5);
-	if ( $months < 24 ) {
-		return "{$months} months";
-		}
-	$years = (int)($months / 12 + 0.5);
-	return "{$years} years";
+
+	$answer['header'] = $header;
+	$answer['content'] = $showdiff ? $content : preg_replace_callback('/ \\[\\[(.+?)\\]\\]/','webmaster_comment_to_link', $content);
+	//printf("%.3f ms<br>", (gettimeofday(true)-$start_time)*1000);
+
+	return $answer;
 	}
 
 function cable2row($sqlrow) {
-	$classiclass = stripos($sqlrow['classification'],'secret') !== false ? 'cls' : (stripos($sqlrow['classification'],'confidential') !== false ? 'clc' : 'clu');
-	return sprintf('<td class="%s"><td>%s<td><a href="cable.php?id=%s"%s>%s</a> &mdash; <a href="search.php?q=%s">%s</a><td class="since">%s',
+	$classiclass = stripos(
+		$sqlrow['classification'],'secret') !== false
+		? 'cls'
+		: (stripos(
+			$sqlrow['classification'],'confidential') !== false
+			? 'clc'
+			: 'clu'
+			)
+		;
+	return sprintf(
+		'<td class="%s"><td>%s<td><a href="cable.php?id=%s"%s>%s</a> &mdash; <a href="search.php?q=%s">%s</a><td class="since">%s',
 		$classiclass,
 		date('Y, M j',$sqlrow['cable_time']),
 		htmlentities(urlencode($sqlrow['canonical_id'])),
@@ -456,7 +526,11 @@ function cables2rows($sqlresult) {
 	$two_days_ago = time() - 60 * 60 * 24 * 2;
 	ob_start();
 	while ($sqlrow = mysql_fetch_assoc($sqlresult)) {
-		printf('<tr id="cableid-%d">%s',$sqlrow['id'],cable2row($sqlrow));
+		printf(
+			'<tr id="cableid-%d">%s',
+			$sqlrow['id'],
+			cable2row($sqlrow)
+			);
 		}
 	return ob_get_clean();
 	}
@@ -464,7 +538,7 @@ function cables2rows($sqlresult) {
 function cables2json($sqlresult) {
 	$entries = array();
 	$two_days_ago = time() - 60 * 60 * 24 * 2;
-	while ($sqlrow = mysql_fetch_assoc($sqlresult)) {
+	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$entry = array();
 		$entry['id'] = (int)$sqlrow['id'];
 		$entry['html'] = cable2row($sqlrow);
@@ -543,5 +617,13 @@ function get_cable_entries($raw_query, $sort, $yt, $mt, $offset, $limit) {
 	$sqlresult = mysql_query($sqlquery);
 	if (!$sqlresult) { exit(mysql_error()); }
 	return json_encode(cp1252_to_utf8(array('cables'=>cables2json($sqlresult))));
+	}
+
+/*********************************************************/
+// WTF?!?: 05THEHAGUE2309
+
+function fineDiffHTML($from, $to) {
+	$diff = new fineDiff($from, $to);
+	return $diff->renderDiffToHTML();
 	}
 ?>
