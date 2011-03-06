@@ -1,7 +1,6 @@
 <?php
 include_once("cacher.php");
 include_once("globals.php");
-include_once("globals-generated.php");
 
 // get a cart
 $cart = '';
@@ -77,7 +76,7 @@ if (!$cart_is_empty ) {
 <body>
 <h1>Cablegate's cables: <?= $cart_type ?> cart</h1>
 <?php if ( !$cart_is_empty ) { ?>
-<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="Check these cables #cablegate" data-url="http://www.cablegatesearch.net/cart.php<?php echo "?cart=", urlencode($cart); ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span><!-- end twitter -->
+<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gorhill" data-text="Check these cables #cablegate" data-url="http://www.cablegatesearch.net/cart.php<?php echo "?cart=", urlencode($cart); ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span><!-- end twitter -->
 <?php } ?>
 <?php include('header.php'); ?>
 <div id="main">
@@ -258,11 +257,6 @@ $$('#export > div:first-child + div > div').each(function(container){
 <?php include('contact-inc.html'); ?>
 </div>
 </div>
-<p id="cart-tips"><?php if ( $is_guest_cart ) { ?>
-Marking a cable with <img style="vertical-align:bottom" width="16" height="16" src="bookmark.png" alt="In cart"> will place this cable in your <span style="font-weight:bold">private cart</span>. When viewing your <span style="font-weight:bold">private cart</span>, you can obtain a persistent snapshot of its content, for future reference or to share with others
-<?php } else { ?>
-Removing the <img style="vertical-align:bottom" width="16" height="16" src="bookmark.png" alt="In cart"> from a cable will remove this cable from your <span style="font-weight:bold">private cart</span>
-<?php } ?>.</p>
 </body>
 </html>
 <?php
