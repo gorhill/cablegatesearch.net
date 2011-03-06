@@ -4,28 +4,82 @@ include_once("cablegate-functions.php");
 
 header_cache(120);
 
-$cache_id = "history";
+$now_period = intval(date('Ym'));
+
+if ( isset($_REQUEST['period']) ) {
+	if ( !preg_match('/^201\\d(0[1-9]|1[012])$/', $_REQUEST['period']) ) {
+		exit('Invalid period');
+		}
+	$request_period = $_REQUEST['period'];
+	}
+else {
+	$request_period = $now_period;
+	}
+$request_period_year = intval(substr($request_period,0,4));
+$request_period_month = intval(substr($request_period,4,2));
+
+$cache_id = "history_{$request_period}";
 if ( !db_output_compressed_cache($cache_id) ) {
 db_open_compressed_cache($cache_id);
 // -----
+$MONTHS = array(
+	1 => 'January',
+	'February',
+	'March',
+	'April',
+	'May',
+	'June',
+	'July',
+	'August',
+	'September',
+	'October',
+	'November',
+	'December'
+	);
+$title_period = "{$MONTHS[$request_period_month]} {$request_period_year}";
 ?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
 <style type="text/css">
 <?php include('cablegate.css'); ?>
+#graph {margin-left:3em;padding:2px 2px 0 2px;border:1px solid #aaa}
+#graph td {color:#888}
+#graph td.in {color:black;background:#fff}
+#graph tr:first-child > td {padding:0 0 0 1px;width:20px;vertical-align:bottom}
+#graph tr:first-child > td a {display:inline-block;width:20px}
+#graph tr:first-child > td.in a.a {background:#80bf80}
+#graph tr:first-child > td a.a {background:#cce5cc}
+#graph tr:first-child > td.in a.m {background:#8080ff}
+#graph tr:first-child > td a.m {background:#ccccff}
+#graph tr:first-child > td.in a.r {background:#ff8080}
+#graph tr:first-child > td a.r {background:#ffcccc}
+#graph tr:first-child ~ tr {font-size:10px}
+#graph tr:first-child ~ tr > td:first-child ~ td {border-left:1px solid #aaa}
+#graph tr:first-child + tr > td {text-align:center}
+#graph tr:first-child + tr + tr > td {padding:2px 1px 0 1px}
 ul.releases {margin-left:0;padding-left:0}
 li.release > ul {margin-top:0.5em}
 li.release > ul > li {display:inline-block;width:18em;font-size:11px;white-space:nowrap;color:darkgreen}
 li.release > ul > li a {color:inherit}
-li.release > ul > li.a {color:darkgreen}
 li.release > ul > li:before {content:"\002B\2009"}
 li.release > ul > li.m {color:blue}
 li.release > ul > li.m:before {content:"\2213\2009"}
 li.release > ul > li.r {color:red}
 li.release > ul > li.r:before {content:"\2212\2009"}
+li.release > ul > li.nc {color:gray}
+li.release > ul > li.nc:before {content:"\3D\2009"}
+.c,.u,.s,li.release > ul > li > span {margin:0 2px 2px 0;display:inline-block;width:7px;height:11px;vertical-align:bottom}
+.c,li.release > ul > li > span {background:#ffe4aa}
+.u,li.release > ul > li > span.u {background:#aaffba}
+.s,li.release > ul > li > span.s {background:#ffaaaa}
+.a {color:darkgreen}
+.m {color:blue}
+.r {color:red}
+.nc {color:gray}
 a.magnet {margin-left:3em;font-size:smaller;color:gray;cursor:pointer}
+.cable-tip .tip {border:1px solid gray;padding:4px 8px;width:20em;background-color:#fffff8;border-radius:5px;-moz-border-radius:5px;font-size:12px;font-variant:small-caps}
 </style>
-<title>Cablegate's cables: Release History</title>
+<title>Cablegate's cables: Publishing history for <?php echo $title_period; ?></title>
 <meta http-equiv="Content-Language" content="en">
 <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
 <meta name="keywords" content="cablegate, wikileaks, cables, history">
@@ -35,33 +89,166 @@ a.magnet {margin-left:3em;font-size:smaller;color:gray;cursor:pointer}
 <script type="text/javascript" src="cablegate-core.js"></script>
 </head>
 <body>
-<h1>Cablegate's cables: Release History</h1>
-<?php include('header.php'); ?>
+<h1>Cablegate's cables: Publishing history for <?php echo $title_period; ?></h1>
+<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gorhill" data-url="http://www.cablegatesearch.net/history.php<?php
+if ( $request_period != $now_period ) {
+	echo "?period={$request_period}";
+	}
+?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span><?php include('header.php'); ?>
 <div id="main">
-<div style="font-size:14px">
 <?php
-// First get number of cables involved
-$sqlquery = "SELECT COUNT(DISTINCT `cable_id`) AS `num_cables` FROM `cablegate_changes`";
-$num_cables = '?';
+// overview
+// 8 hours is added to release time since the server is on the west coast
+// TODO: avoid hard coding tz offset
+$sqlquery = "
+	SELECT
+		FROM_UNIXTIME(cre.`release_time`+28800, '%Y%m') AS `period`,
+		SUM(IF(cch.`change`=1,1,0)) AS `num_added`,
+		SUM(IF(cch.`change`=2,1,0)) AS `num_modified`,
+		SUM(IF(cch.`change`=3,1,0)) AS `num_removed`,
+		SUM(IF(cch.`change`=4,1,0)) AS `num_readded`
+	FROM
+		`cablegate_releases` cre
+		INNER JOIN
+		`cablegate_changes` cch
+		ON cre.`release_id` = cch.`release_id`
+	GROUP BY
+		`period`
+	";
+// printf('<p>explain %s;</p>', $sqlquery);
 if ( $sqlresult = mysql_query($sqlquery) ) {
-	$num_cables = mysql_result($sqlresult,0);
+	$changes_per_month = array();
+	$total_num_added = 0;
+	$total_num_modified = 0;
+	$total_num_removed = 0;
+	$total_num_readded = 0;
+	$max_changes_per_month = 0;
+	$max_bar_height = 150;
+	$years_axis_last_year = 9999;
+	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
+		$period = $sqlrow['period'];
+		$year = intval(substr($period,0,4));
+		$num_added = intval($sqlrow['num_added']);
+		$num_modified = intval($sqlrow['num_modified']);
+		$num_removed = intval($sqlrow['num_removed']);
+		$num_readded = intval($sqlrow['num_readded']);
+		$total_num_added += $num_added;
+		$total_num_modified += $num_modified;
+		$total_num_removed += $num_removed;
+		$total_num_readded += $num_readded;
+		$changes_per_month[$period] = array($num_added, $num_modified, $num_removed);
+		$max_changes_per_month = max($max_changes_per_month, $num_added + $num_modified + $num_removed);
+		$years_axis_last_year = min($years_axis_last_year,$year);
+		}
+?>
+<p style="margin-top:0">All time: <span class="a"><?php echo $total_num_added; ?> published</span>, <span class="m"><?php echo $total_num_modified; ?> modified</span>, <span class="r"><?php echo $total_num_removed; ?> removed</span> of which <span class="nc"><?php echo $total_num_readded; ?> have been restored without modifications</span>.</p>
+<table id="graph" cellspacing="0" cellpadding="0">
+<?php
+	$months_axis_html = '<tr>';
+	$years_axis_html = '<tr>';
+	$num_month_columns = 0;
+	foreach ( $changes_per_month as $period => $changes ) {
+		$year = (int)substr($period,0,4);
+		$month = (int)substr($period,4,2);
+		$column_class = $period == $request_period ? ' class="in"' : '';
+		list($num_added, $num_modified, $num_removed) = $changes;
+		printf('<td%s>', $column_class);
+		if ( $num_removed ) {
+			printf('<a class="r" href="/history.php%s" style="height:%dpx" title="%s %d: %d removed"></a>',
+				$period != $now_period ? "?period={$period}" : '',
+				(int)ceil($num_removed*$max_bar_height/$max_changes_per_month),
+				$MONTHS[$month],
+				$year,
+				$num_removed
+				);
+			}
+		if ( $num_modified ) {
+			printf('<a class="m" href="/history.php%s" style="height:%dpx" title="%s %d: %d modified"></a>',
+				$period != $now_period ? "?period={$period}" : '',
+				(int)ceil($num_modified*$max_bar_height/$max_changes_per_month),
+				$MONTHS[$month],
+				$year,
+				$num_modified
+				);
+			}
+		if ( $num_added ) {
+			printf('<a class="a" href="/history.php%s" style="height:%dpx" title="%s %d: %d added"></a>',
+				$period != $now_period ? "?period={$period}" : '',
+				(int)ceil($num_added*$max_bar_height/$max_changes_per_month),
+				$MONTHS[$month],
+				$year,
+				$num_added
+				);
+			}
+		$months_axis_html .= sprintf('<td%s>%s', $column_class, substr($MONTHS[$month],0,3));
+		if ( $year != $years_axis_last_year ) {
+			$column_class = $years_axis_last_year == $request_period_year ? ' class="in"' : '';
+			if ( $num_month_columns > 1 ) {
+				$years_axis_html .= sprintf('<td%s colspan="%d">%d',
+					$column_class,
+					$num_month_columns,
+					$years_axis_last_year
+					);
+				}
+			else {
+				$years_axis_html .= sprintf('<td%s>%d',
+					$column_class,
+					$years_axis_last_year
+					);
+				}
+			$years_axis_last_year = $year;
+			$num_month_columns = 0;
+			}
+		$num_month_columns++;
+		}
+	if ( $num_month_columns > 1 ) {
+		$column_class = $years_axis_last_year == $request_period_year ? ' class="in"' : '';
+		$years_axis_html .= sprintf('<td%s colspan="%d">%d',
+			$column_class,
+			$num_month_columns,
+			$years_axis_last_year
+			);
+		}
+	else {
+		$years_axis_html .= sprintf('<td%s>%d',
+			$column_class,
+			$years_axis_last_year
+			);
+		}
+	echo $months_axis_html, $years_axis_html;
+	echo '</table>';
 	}
 
 // Get changes over releases
+$cable_subject_array = array();
+$release_time_beg = strtotime("{$MONTHS[$request_period_month]} {$request_period_year}");
+$release_time_end = strtotime("{$MONTHS[$request_period_month]} {$request_period_year} +1 month");
 $sqlquery = "
 	SELECT
 		cre.`release_time`,
 		cre.`magnet`,
 		cch.`cable_id`,
 		cch.`change`,
-		cca.`canonical_id`
+		cca.`canonical_id`,
+		cca.`classification_id`,
+		cca.`subject`
 	FROM
 		`cablegate_cables` cca
-		INNER JOIN
-		(
-			`cablegate_releases` cre
-			INNER JOIN
+		INNER JOIN (
 			`cablegate_changes` cch
+			INNER JOIN (
+				SELECT
+					`release_id`,
+					`release_time`,
+					CAST(FROM_UNIXTIME(`release_time`,'%Y') AS UNSIGNED) AS `release_year`,
+					CAST(FROM_UNIXTIME(`release_time`,'%m') AS UNSIGNED) AS `release_month`,
+					`magnet`
+				FROM
+					`cablegate_releases`
+				WHERE
+					`release_time` >= {$release_time_beg} AND
+					`release_time` < {$release_time_end}
+				) cre
 			ON cre.`release_id` = cch.`release_id`
 			)
 		ON cca.`id` = cch.`cable_id`
@@ -69,57 +256,141 @@ $sqlquery = "
 		cre.`release_time` DESC,
 		cca.`canonical_id` DESC
 	";
+// printf('<p>explain %s;</p>', $sqlquery);
 if ( $sqlresult = mysql_query($sqlquery) ) {
+
+	$CLASSIFICATION_ID_TO_CLASS_MAP = array(
+		'',
+		' class="u"',
+		'',
+		' class="s"',
+		' class="s"',
+		'',
+		' class="u"'
+		);
+
+	echo '<p style="margin-left:3em;color:gray"><span class="u"></span>Unclassified&emsp;<span class="c"></span>Confidential&emsp;<span class="s"></span>Secret</p>';
+
+	echo '<ul class="releases">';
 	$release_magnets = array();
-	$change_dates = array();
-	printf('<p>%d additions/modifications/deletions concerning %d unique cables.</p><ul class="releases">', mysql_num_rows($sqlresult), $num_cables);
+	$releases = array();
+	$cable_details_map = array();
+	$change_classes = array(
+		1 => '',
+		' class="m"',
+		' class="r"',
+		' class="nc"' // no change
+		);
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$change = (int)$sqlrow['change'];
-		$change_time = (int)$sqlrow['release_time'];
-		if ( !isset($change_dates[$change_time]) ) {
-			$change_dates[$change_time] = array();
+		$release_time = (int)$sqlrow['release_time'];
+		if ( !isset($releases[$release_time]) ) {
+			$releases[$release_time] = array();
 			}
-		$change_dates[$change_time][$sqlrow['canonical_id']] = ($change == 1 ? 'a' : ($change == 2 ? 'm' : 'r'));
-		$release_magnets[$change_time] = $sqlrow['magnet'];
+		$releases[$release_time][$sqlrow['canonical_id']] = $change;
+		$cable_details_map[$sqlrow['canonical_id']] = array(
+			'classification_id' => $sqlrow['classification_id'],
+			'subject' => $sqlrow['subject']
+			);
+		$release_magnets[$release_time] = $sqlrow['magnet'];
 		}
-	krsort($change_dates);
-	foreach ($change_dates as $change_time => &$change_details) {
+	krsort($releases);
+	foreach ($releases as $release_time => &$change_details) {
 		$occurrences = array_count_values($change_details);
 		$fragments = array();
-		if ( isset($occurrences['a']) && $occurrences['a'] > 0 ) {
-			$fragments[] = "<span class=\"a\">{$occurrences['a']} added</span>";
+		if ( isset($occurrences[1]) && $occurrences[1] > 0 ) {
+			$fragments[] = "<span class=\"a\">{$occurrences[1]} added</span>";
 			}
-		if ( isset($occurrences['m']) && $occurrences['m'] > 0 ) {
-			$fragments[] = "<span class=\"m\">{$occurrences['m']} modified</span>";
+		if ( isset($occurrences[2]) && $occurrences[2] > 0 ) {
+			$fragments[] = "<span class=\"m\">{$occurrences[2]} modified</span>";
 			}
-		if ( isset($occurrences['r']) && $occurrences['r'] > 0 ) {
-			$fragments[] = "<span class=\"r\">{$occurrences['r']} removed</span>";
+		if ( isset($occurrences[3]) && $occurrences[3] > 0 ) {
+			$fragments[] = "<span class=\"r\">{$occurrences[3]} removed</span>";
 			}
 		printf('<li class="release">%s UTC: %s<br><a class="magnet" href="%s">Torrent magnet for cablegate-%s.7z: %s</a><ul>',
-			date('l, j F Y H:i ',$change_time),
+			date('l, j F Y H:i ',$release_time),
 			implode(', ',$fragments),
-			htmlentities($release_magnets[$change_time]),
-			date('YmjHi',$change_time),
-			htmlentities($release_magnets[$change_time])
+			htmlentities($release_magnets[$release_time]),
+			date('YmjHi',$release_time),
+			htmlentities($release_magnets[$release_time])
 			);
 		krsort($change_details);
 		foreach ( $change_details as $canonical_id => &$change ) {
 			printf(
-				'<li%s><a href="cable.php?id=%s">%s</a>',
-				$change == 'm' ? ' class="m"' : ($change == 'r' ? ' class="r"' : ''),
+				'<li%s><span%s></span><a href="cable.php?id=%s">%s</a>',
+				$change_classes[$change],
+				$CLASSIFICATION_ID_TO_CLASS_MAP[$cable_details_map[$canonical_id]['classification_id']],
 				htmlentities(urlencode($canonical_id)),
 				htmlentities($canonical_id)
 				);
+			//$cable_subject_array[] = $cable_details_map[$canonical_id]['subject'];
 			}
 		echo '</ul><br>';
 		}
 	echo "\n</ul>\n";
 	}
 ?>
-</div>
 <?php include('contact-inc.html'); ?>
 </div><!-- end main -->
-<p id="cart-tips">Marking a cable with <img style="vertical-align:bottom" width="16" height="16" src="bookmark.png" alt="In cart"> will place this cable in your <span style="font-weight:bold">private cart</span>. When viewing your <span style="font-weight:bold">private cart</span>, you can obtain a persistent snapshot of its content, for future reference or to share with others.</p>
+<script type="text/javascript">
+<!--
+(function(){
+	var cableTip = null;
+	var cableHovered = null;
+	var tipRequestHandler = function(response) {
+		if (response.subjects) {
+			Object.each(response.subjects, function(subject, canonicalId) {
+				$$('a[href="cable.php?id='+canonicalId+'"]').each(function(atag){
+					atag.store('tip:text',subject);
+					// update text in tip if needed
+					if (atag === cableHovered && cableTip) {
+						cableTip.getElement('.tip-text').set('text',subject);
+						}
+					});
+				});
+			}
+		};
+	var tipRequest = function(e) {
+		// request subject from server, request a bunch
+		// while at it
+		var atags = e.getParent('ul').getElements('a[href^="cable.php"]');
+		var canonicalIds = [];
+		atags.each(function(atag){
+			canonicalIds.push(atag.innerHTML);
+			});
+		var args = {
+			command: 'get_cable_subjects',
+			canonicalIds: canonicalIds.join(',')
+			};
+		var options={
+			url: 'cablegate-do.php',
+			onSuccess: tipRequestHandler
+			};
+		var jsonRequest=new Request.JSON(options).get(args);
+		};
+	var init = function() {
+		var tip_options = {
+			showDelay: 500,
+			className: 'cable-tip',
+			fixed: true,
+			onShow: function(tip, hovered) {
+				cableTip = tip;
+				cableHovered = hovered;
+				var subject = hovered.retrieve('tip:text',null);
+				if (subject === '...') {
+					tipRequest(hovered);
+					}
+				tip.setStyle('display','block');
+				}
+			};
+		var atags = $$('a[href^="cable.php"]');
+		atags.each(function(atag){atag.store('tip:text','...');});
+		cableTip = new Tips(atags,tip_options);
+		}
+	window.addEvent('domready',init);
+}());
+// -->
+</script>
 </body>
 </html><?php
 // -----
