@@ -54,7 +54,7 @@ switch ($command) {
 			'suggestions' => array()
 			);
 		if ( strlen($startwith) > 1 ) {
-			$limit = isset($_REQUEST['limit']) && ctype_digit($_REQUEST['limit']) ? (int)$_REQUEST['limit'] : 10;
+			$limit = isset($_REQUEST['limit']) && ctype_digit($_REQUEST['limit']) ? intval($_REQUEST['limit']) : 10;
 			$sqlquery = sprintf(
 				"
 				SELECT ct.`term_id`,ct.`term`,COUNT(`cable_id`) AS `numCables`
@@ -73,15 +73,54 @@ switch ($command) {
 				$limit
 				);
 			if ( $sqlresult = mysql_query($sqlquery) ) {
-				while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
-					$answer['suggestions'][] = "{$sqlrow['term']} <span>({$sqlrow['numCables']})</span>";
+				if ( mysql_num_rows($sqlresult) ) {
+					while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
+						$answer['suggestions'][] = "{$sqlrow['term']} <span>({$sqlrow['numCables']})</span>";
+						}
+					}
+				else {
+					$answer['suggestions'][] = "<span>(No matches)</span>";
 					}
 				}
 			}
 		echo json_encode(cp1252_to_utf8($answer));
 		break;
 
+	case 'get_cable_subjects':
+		header_cache(60);
+		$canonical_ids = isset($_REQUEST['canonicalIds']) ? utf8_to_cp1252($_REQUEST['canonicalIds']) : '';
+		$cache_id = "do_get-cable-subjects_" . md5($canonical_ids);
+		if ( !db_output_compressed_cache($cache_id) ) {
+			db_open_compressed_cache($cache_id);
+			// -----
+			echo json_encode(cp1252_to_utf8(get_cable_subjects($canonical_ids)));
+			// -----
+			db_close_compressed_cache();
+			}
+		break;
+
 	default:
 		exit('Invalid command');
 	}
+
+/*****************************************************************************/
+
+function get_cable_subjects($canonical_ids) {
+	$answer = array('subjects' => array());
+	$canonical_ids = explode(',', $canonical_ids);
+	sort($canonical_ids, SORT_REGULAR);
+	$sqlquery = "SELECT `canonical_id`,`subject` FROM `cablegate_cables` WHERE ";
+	$sqlquerywhere = array();
+	foreach ( $canonical_ids as $canonical_id ) {
+		$sqlqueryparts[] = sprintf("`canonical_id`='%s'", mysql_real_escape_string($canonical_id));
+		}
+	$sqlquery .= implode(' OR ', $sqlqueryparts);
+	if ( $sqlresult = mysql_query($sqlquery) ) {
+		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
+			$answer['subjects'][$sqlrow['canonical_id']] = $sqlrow['subject'];
+			}
+		}
+	return $answer;
+	}
+
 ?>
