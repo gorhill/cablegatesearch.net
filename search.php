@@ -30,7 +30,7 @@ $qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
 <?php include('cablegate.css'); ?>
 <?php include('cablegate-cart.css'); ?>
 <?php include('cablegate-list.css'); ?>
-#search-suggestions {padding:3px;position:absolute;left:2em;right:2px;background:#DFDDF0;box-shadow:3px 3px 2px #aaa;-moz-box-shadow:3px 3px 2px #aaa;-webkit-box-shadow:3px 3px 2px #aaa;z-index:2}
+#search-suggestions {padding:3px;position:absolute;left:2em;right:2px;background:#DFDDF0;box-shadow:2px 2px 5px #888;-moz-box-shadow:2px 2px 5px #888;-webkit-box-shadow:2px 2px 5px #888;z-index:2}
 #search-suggestions > div {padding:1px;cursor:pointer}
 #search-suggestions > div > span {color:gray}
 #search-suggestions > .selected {background:#FFFAE8}
@@ -66,10 +66,26 @@ $qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
 </head>
 <body>
 <h1><?php echo $title; ?></h1>
-<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="<?php echo $title, ' #cablegate'; ?>" data-url="http://t.co/OLECRvQ<?php if ( !empty($prepdata['urlencoded_query']) ) { echo "search.php?q={$prepdata['urlencoded_query']}"; } ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
+<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gorhill" data-text="<?php echo $title, ' #cablegate'; ?>" data-url="http://www.cablegatesearch.net/search.php<?php if ( !empty($prepdata['urlencoded_query']) ) { echo "?q={$prepdata['urlencoded_query']}"; } ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
 <?php include('header.php'); ?>
 <div id="main">
-<div id="intro">This site is best viewed using a <a href="http://en.wikipedia.org/wiki/Acid3#Browsers_that_pass">modern, highly-compliant browser</a> <a href="http://acid3.acidtests.org/">(score >= 90)</a><noscript style="color:red">, with Javascript enabled</noscript>. <!--[if lte IE 8]> <span style="color:#c44">Internet Explorer 8 doesn't support all features, visual or otherwise, available on this page.</span> <![endif]-->Database content based on a snapshot of <a href="http://213.251.145.96/cablegate.html">Wikileaks' Cablegate</a> as of <span><?php echo $CABLEGATE_VERSION_DATE; ?></span> (<span class="since"><?php echo $CABLEGATE_VERSION_DATE; ?></span> ago). Other full-text search tools on the web: <a href="http://cablesearch.org/">CableSearch</a>, <a href="https://kabelsearch.org/">KABELS</a>, <a href="http://dazzlepod.com/cable/">dazzelpod</a>.</div>
+<div id="intro">This site is best viewed using a <a href="http://en.wikipedia.org/wiki/Acid3#Browsers_that_pass">modern, highly-compliant browser</a> <a href="http://acid3.acidtests.org/">(score >= 90)</a><noscript style="color:red">, with Javascript enabled</noscript>. <!--[if lte IE 8]> <span style="color:#c44">Internet Explorer 8 doesn't support all features, visual or otherwise, available on this page.</span> <![endif]--><?php
+// Get last time the db was updated by Wikileaks
+$last_time_updated = '?';
+$sqlquery = "
+	SELECT `release_time`
+	FROM `cablegate_releases` re
+		INNER JOIN `cablegate_changes` ch
+		ON ch.`release_id` = re.`release_id`
+	ORDER BY `release_time` DESC
+	LIMIT 1	
+	";
+// printf('<p>%s</p>', $sqlquery);
+if ( ($sqlresult = mysql_query($sqlquery)) &&
+     ($sqlrow = mysql_fetch_row($sqlresult)) ) {
+	$last_time_updated = date('D, j M Y, H:i:00', (int)$sqlrow[0]) . ' UTC';
+	}
+?>Database content based on a snapshot of <a href="http://213.251.145.96/cablegate.html">Wikileaks' Cablegate</a> as of <span><?php echo $last_time_updated; ?></span> (<span class="since"><?php echo $last_time_updated; ?></span> ago). For more Cablegate resources on the web, see <a href="http://wlcentral.org/">WL Central&rsquo;s</a> <a href="http://wlcentral.org/cablegate">&ldquo;Cablegate Resources&rdquo;</a>.</div>
 <form id="form" method="get" action="search.php">
 <div style="margin-top:1em">
 <div style="margin:0 1em 0 0;display:inline-block;position:relative;vertical-align:top">Keyword(s)<br><input id="q" type="text" value="<?php echo htmlentities($raw_query); ?>" name="q" maxlength="100"><div id="search-suggestions" style="display:none"></div><span id="qexpressions" style="display:none"><?php echo $qexpressions; ?></span><img id="clear-q" style="position:absolute;bottom:4px;right:4px;visibility:<?php echo empty($prepdata['normalized_query']) ? 'hidden' : 'visible'; ?>" src="edit-clear-2.png" width="16" height="16" alt="Reset" title="Reset query/results"></div><span style="margin:0 2em 0 0;display:inline-block;vertical-align:top"><br><input type="submit" value="Retrieve" style="width:6em"></span>&nbsp;<span style="display:inline-block;vertical-align:top">Sort by...<br><input type="radio" name="sort" value="0"<?php if (!$sort) { echo ' checked="checked"'; } ?>>Cable date<br><input type="radio" name="sort" value="1"<?php if ($sort) { echo ' checked="checked"'; } ?>>Leak date</span>
@@ -264,7 +280,6 @@ var CablegateGetNextInfo={
 <?php } ?>
 </div>
 <?php include('contact-inc.html'); ?>
-<p id="cart-tips">Marking a cable with <img style="vertical-align:bottom" width="16" height="16" src="bookmark.png" alt="In cart"> will place this cable in your <span style="font-weight:bold">private cart</span>. When viewing your <span style="font-weight:bold">private cart</span>, you can obtain a persistent snapshot of its content, for future reference or to share with others.</p>
 </body>
 </html>
 <?php
