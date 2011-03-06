@@ -16,6 +16,19 @@ $cache_id = "browse_" . implode('-',$stack_of_tags);
 if ( !db_output_compressed_cache($cache_id) ) {
 db_open_compressed_cache($cache_id);
 // -----
+$MAX_COUNT = 300;
+$MAX_FONTSIZE = 48;
+$MIN_FONTSIZE = 11;
+$DEFAULT_FONTSIZE = 18;
+$FONT_RANGE = $MAX_FONTSIZE - $MIN_FONTSIZE;
+$TAGIDS_TO_IGNORE = array(
+	11, /* External Political Relations */
+	15  /* Internal Governmental Affairs */
+	);
+$STRINGIFIED_TAGIDS_TO_IGNORE = implode(',',$TAGIDS_TO_IGNORE);
+
+$stringified_stack_of_tags = implode(',',$stack_of_tags);
+$nTags = count($stack_of_tags);
 ?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -27,7 +40,7 @@ div {margin:0;padding:0}
 #main {padding:2px}
 #intro {font-size:x-small;color:gray}
 .topics {text-align:center;color:#ccc}
-.topics div {margin:2px 10px;padding:2px;border:1px dotted #ccc;display:inline-block;position:relative;overflow:hidden;vertical-align:middle}
+.topics div {margin:2px 10px;padding:2px;border:1px dotted #ccc;display:inline-block;overflow:hidden;vertical-align:middle}
 .topics div a {color:inherit;white-space:nowrap}
 .t0 {color:#888;background:#f6f6f6}
 .t0:hover {color:#f6f6f6;background:#888}
@@ -50,12 +63,20 @@ div {margin:0;padding:0}
 <meta name="keywords" content="cablegate, wikileaks, full, text, search, browse">
 <meta name="description" content="Cablegate's cable: Browse by tags">
 <?php include('mootools-core-1.3-loader.inc'); ?>
-<script type="text/javascript" src="mootools-more.js"></script>
+<script type="text/javascript" src="mootools-more-browser.js"></script>
 <script type="text/javascript" src="cablegate-core.js"></script>
+<?php
+if ( !$nTags ) {
+?>
+<script type="text/javascript" src="rotater.js"></script>
+<script type="text/javascript" src="tabs.js"></script>
+<?php
+	}
+?>
 </head>
 <body>
 <h1>Cablegate's cables: Browse by tags</h1>
-<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="Cablegate's cables #cablegate: Browse by tags" data-url="http://www.cablegatesearch.net/browse.php<?php
+<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gorhill" data-text="Cablegate's cables #cablegate: Browse by tags" data-url="http://www.cablegatesearch.net/browse.php<?php
 if ( count($stack_of_tags) > 0 ) {
 	echo '?tags=', htmlentities(urlencode($_REQUEST['tags']));
 	}
@@ -65,19 +86,11 @@ if ( count($stack_of_tags) > 0 ) {
 <div>
 <p>Under construction. This page allows you to visually appreciate the number of cables for any given tags. Clicking on a particular tag allows you to &ldquo;drill-in&rdquo; and see the number of cables as a result of the intersection with the &ldquo;drilled-in&rdquo; tags.</p>
 <?php
-$MAX_COUNT = 300;
-$MAX_FONTSIZE = 48;
-$MIN_FONTSIZE = 11;
-$DEFAULT_FONTSIZE = 18;
-$FONT_RANGE = $MAX_FONTSIZE - $MIN_FONTSIZE;
-$TAGIDS_TO_IGNORE = array(
-	12, /* External Political Relations */
-	16  /* Internal Governmental Affairs */
-	);
-$STRINGIFIED_TAGIDS_TO_IGNORE = implode(',',$TAGIDS_TO_IGNORE);
 
-$stringified_stack_of_tags = implode(',',$stack_of_tags);
-$nTags = count($stack_of_tags);
+//
+/*****************************************************************************/
+// Drilled in
+
 if ( $nTags > 0 ) {
 	// create an sql query to intersect all sets of cables obtained from each tag from the tag stacks
 	$subquery = "select cable_id from cablegate_tagassoc where tag_id={$stack_of_tags[0]}";
@@ -96,28 +109,42 @@ if ( $nTags > 0 ) {
 	$range = $max_num_cables - $min_num_cables;
 
 	// create title according to content of stack of tags
-	$tag_names = array();
-	$sqlquery = "select `id`,if(char_length(`definition`)!=0,`definition`,`tag`) as `tag_name` from `cablegate_tags` where `id` in ({$stringified_stack_of_tags})";
+	$tag_details = array();
+	$sqlquery = "
+		select
+			`id`,
+			`tag`,
+			`definition`
+		from
+			`cablegate_tags`
+		where
+			`id` in ({$stringified_stack_of_tags})
+		";
 	$sqlresult = mysql_query($sqlquery);
 	echo mysql_error();
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
-		$tag_names[$sqlrow['id']] = $sqlrow['tag_name'];
+		$tag_details[$sqlrow['id']] = array($sqlrow['tag'], $sqlrow['definition']);
 		}
 	printf('<h3><a href="browse.php">Go to top</a>&ensp;|&ensp;');
+	$query_terms = array();
 	$query = '';
-	$query_separator = '';
 	$title_separator = '';
 	foreach ( $stack_of_tags as $tag_id ) {
-		$tag = $tag_names[$tag_id];
-		$query = sprintf("{$query}{$query_separator}=%s",preg_replace('/\\W+/','-',$tag));
+		list($tag, $definition) = $tag_details[$tag_id];
+		$tag_rendered = empty($definition) ? $tag : "{$definition} ({$tag})";
+		$query_terms[] = sprintf(
+			"%%3D%s%s%s",
+			htmlentities(urlencode(preg_replace('/\\s+/','-',$tag))),
+			!empty($definition) ? '+%3D' : '',
+			htmlentities(urlencode(preg_replace('/\\s+/','-',$definition)))
+			);
 		printf(
 			'%s&ldquo;<a rel="nofollow" href="search.php?q=%s">%s</a>&rdquo;&thinsp;<a rel="nofollow" class="rmtag" href="browse.php?tags=%s" title="Remove this tag">&#x2717;</a>',
 			$title_separator,
-			htmlentities(urlencode($query)),
-			htmlentities($tag),
+			implode('+', $query_terms),
+			htmlentities($tag_rendered),
 			htmlentities(urlencode(str_replace(',,',',',trim(str_replace($tag_id,'',$stringified_stack_of_tags),','))))
 			);
-		$query_separator = ' ';
 		$title_separator = '&ensp;&amp;&ensp;';
 		}
 	//printf('&ensp;&asymp;&ensp;%d cable%s</h3><div class="topics">',$num_cables,$num_cables>1?'s':'');
@@ -145,18 +172,23 @@ if ( $nTags > 0 ) {
 		}
 	echo '</div>';
 	}
+
+//
+/*****************************************************************************/
+// Top page
+
 else {
 	$TOPICS = array(
 		'Countries' => 1,
 		'Origins' => 5,
 		'Subjects' => 2,
 		'Programs' => 3,
-		'Organizations' => 4,
-		'Uncategorized/undefined as of now' => 0
+		'Organizations' => 4
 		);
 
 	foreach ( $TOPICS as $topic => $type ) {
-		printf('<h3>%s</h3><div class="topics">',htmlentities($topic));
+		printf('<h3>%s</h3>', htmlentities($topic));
+		printf('<div class="topics">', htmlentities($topic));
 		$sqlquery = "select max(num_cables) as `max_num_cables`,min(num_cables) as `min_num_cables` from `cablegate_tags` t inner join (select `tag_id`,count(`cable_id`) as `num_cables` from `cablegate_tagassoc` group by `tag_id`) ta on ta.tag_id = t.id where t.type={$type}";
 		$sqlresult = mysql_query($sqlquery);
 		echo mysql_error();
@@ -187,11 +219,15 @@ else {
 		echo '</div>';
 		}
 	}
+
+//
+/*****************************************************************************/
+//
+
 ?>
 </div>
 <?php include('contact-inc.html'); ?>
 </div><!-- end main -->
-<p id="cart-tips">Marking a cable with <img style="vertical-align:bottom" width="16" height="16" src="bookmark.png" alt="In cart"> will place this cable in your <span style="font-weight:bold">private cart</span>. When viewing your <span style="font-weight:bold">private cart</span>, you can obtain a persistent snapshot of its content, for future reference or to share with others.</p>
 </body>
 </html>
 <?php
