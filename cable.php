@@ -14,13 +14,21 @@ if ( isset($_REQUEST['id']) ) {
 		$id = strtoupper($_REQUEST['id']);
 		}
 	}
+// parse version, 0 = latest
+$cable_version = 0;
+if ( isset($_REQUEST['version']) && ctype_digit($_REQUEST['version']) ) {
+	$cable_version = (int)$_REQUEST['version'];
+	}
 $cache_id = "cable_{$id}";
+if ( $cable_version ) {
+	$cache_id .= "_{$cable_version}";
+	}
 if ( !db_output_compressed_cache($cache_id) ) {
 db_open_compressed_cache($cache_id);
 // -----
-if ( $cable_data = get_cable_content($id) ) {
+if ( $cable_data = get_cable_content($id, $cable_version) ) {
 	$canonical_id = $cable_data['canonicalId'];
-	$title = sprintf("Cable reference id: %s", htmlentities($canonical_id));
+	$title = sprintf("Cable reference id: #%s", htmlentities($canonical_id));
 	$description = htmlentities($cable_data['subject']);
 	}
 else {
@@ -50,6 +58,8 @@ body {background:white url('background1.png') repeat}
 #cable > div:first-child + div > div:first-child {border-bottom:1px dotted #9ab;padding-bottom:1em;font-size:10.5px}
 #cable > div:first-child + div > div:first-child + div {padding-top:1em;position:relative}
 #cable-body {background:white}
+del {color:#a00;background:#fdd;text-decoration:none}
+ins {color:#080;background:#dfd;text-decoration:none}
 .cl-s {color:red}
 .cl-c {color:#e47800}
 </style>
@@ -65,7 +75,12 @@ body {background:white url('background1.png') repeat}
 </head>
 <body>
 <h1><?php echo $title ?></h1>
-<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="<?php echo $title; ?>" data-url="http://www.cablegatesearch.net/cable.php?id=<?php echo htmlentities(urlencode($canonical_id)); ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
+<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gorhill" data-text="<?php echo $title; ?>" data-url="http://www.cablegatesearch.net/cable.php?id=<?php
+echo htmlentities(urlencode($canonical_id));
+if ( $cable_version ) {
+	echo '&amp;version=', $cable_version;
+	}
+?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
 <?php include('header.php'); ?>
 <div id="main">
 <?php if ( !empty($canonical_id) ) { ?>
@@ -86,7 +101,7 @@ $history = array();
 $sqlquery = "
 	SELECT
 		cr.`release_time` AS `change_time`,
-		`change`
+		cc.`change`
 	FROM
 		`cablegate_releases` cr
 		INNER JOIN
@@ -101,18 +116,23 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 	$changed_at_least_once = 0;
 	$history_details = array(
 		array('color'=>'#000', 'prompts'=>array('','')),
-		array('color'=>'darkgreen', 'prompts'=>array('First added','Added again')),
+		array('color'=>'darkgreen', 'prompts'=>array('First published','Published again')),
 		array('color'=>'blue', 'prompts'=>array('Modified','Modified')),
 		array('color'=>'maroon', 'prompts'=>array('Removed','Removed')),
+		array('color'=>'gray', 'prompts'=>array('Re-added without modification','Re-added without modification')),
 		);
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$change = (int)$sqlrow['change'];
+		$change_time = (int)$sqlrow['change_time'];
 		assert($change < count($history_details));
 		$history[] = sprintf(
-			'<span style="color:%s">%s on %s UTC</span>',
+			'<a style="color:%s;%s" href="cable.php?id=%s%s" rel="nofollow">%s on %s UTC</a>',
 			$history_details[$change]['color'],
+			$cable_version === $change_time ? 'font-weight:bold' : '',
+			$canonical_id,
+			($cable_version === $change_time) ? '' : "&amp;version={$change_time}",
 			$history_details[$change]['prompts'][$changed_at_least_once],
-			date('D, j M Y H:i',$sqlrow['change_time'])
+			date('D, j M Y H:i',$change_time)
 			);
 		$changed_at_least_once = 1;
 		}
@@ -183,7 +203,6 @@ echo $cable_data['content'];
 })();
 // -->
 </script>
-<p id="cart-tips">Marking a cable with <img style="vertical-align:bottom" width="16" height="16" src="bookmark.png" alt="In cart"> will place this cable in your <span style="font-weight:bold">private cart</span>. When viewing your <span style="font-weight:bold">private cart</span>, you can obtain a persistent snapshot of its content, for future reference or to share with others.</p>
 </body>
 </html>
 <?php
