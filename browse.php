@@ -65,14 +65,6 @@ div {margin:0;padding:0}
 <?php include('mootools-core-1.3-loader.inc'); ?>
 <script type="text/javascript" src="mootools-more-browser.js"></script>
 <script type="text/javascript" src="cablegate-core.js"></script>
-<?php
-if ( !$nTags ) {
-?>
-<script type="text/javascript" src="rotater.js"></script>
-<script type="text/javascript" src="tabs.js"></script>
-<?php
-	}
-?>
 </head>
 <body>
 <h1>Cablegate's cables: Browse by tags</h1>
