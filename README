@@ -64,16 +64,16 @@ FILES
 	content, as you should preserve the mapping documented in this
 	file. This ensure that carts are really persistent.
 
-- cablegate_create.sql:
+- cablegate-create.sql:
 	MySQL statements to create the structure of the
 	tables required to run the site
 
-- cablegate_create_and_populate.sql.7z:
+- cablegate-create-and-populate.sql.7z:
 	MySQL statements to create the structures of the
 	tables required to run this site, and to fill them with the data
 	of the latest snapshot of released cables. Since this file is
 	way too large to host here (currently ~20MB), download it from:
-	http://www.cablegatesearch.net/cablegate_create_and_populate.sql.7z
+	http://www.cablegatesearch.net/cablegate-create-and-populate.sql.7z
 
 - cart.php:
 	A tool to collate and persist a specific set of cables
@@ -82,6 +82,12 @@ FILES
 	Contact, credits, etc. This file is included as footer
 	in the main PHP files.
 
+- extras.php:
+	Unsorted features are put in there
+
+- finediff.php:
+	FineDiff class, used to by cable.php to render cable content
+
 - header.php:
 	The HTML code shared by all web pages, which appears just below
 	the title bar
@@ -89,10 +95,6 @@ FILES
 - globals.php:
 	This file is included by a few PHP files. It's likely going to be replaced
 	soon by a serialized PHP variable useful across many pages on the site.
-
-- globals-generated.php:
-	This file is included by a few PHP files. It's likely going to be replaced
-	soon by a serialized PHP variable generated during the parsing of cables.
 
 - history.php:
 	Documents the addition, modification, deletion of
@@ -107,6 +109,10 @@ FILES
 
 - search.php:
 	The main web page to launch a full-text search
+
+- uorigin.php:
+	Unclassified cables by origin
+
 
 - mootools-core-1.3-loader.inc:
 	HTML snippet to load Mootools Core 1.3. I use a proxy loader which requires
