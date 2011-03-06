@@ -51,6 +51,5 @@ a:hover {color:#004;opacity:0.8}
 </div>
 <?php include('contact-inc.html'); ?>
 </div><!-- end main -->
-<p id="cart-tips">Marking a cable with <img style="vertical-align:bottom" width="16" height="16" src="bookmark.png" alt="In cart"> will place this cable in your <span style="font-weight:bold">private cart</span>. When viewing your <span style="font-weight:bold">private cart</span>, you can obtain a persistent snapshot of its content, for future reference or to share with others.</p>
 </body>
 </html>
