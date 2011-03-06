@@ -320,7 +320,7 @@ if (!CablegateObject) {
 					elapsed=String(weeks)+' weeks';
 					}
 				else {
-					var months=fl(weeks/4);
+					var months=fl(days/(365/12));
 					if (months<24){
 						elapsed=String(months)+' months';
 						}
