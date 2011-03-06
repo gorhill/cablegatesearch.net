@@ -99,7 +99,10 @@ if (!CablegateObject) {
 			words = details.words;
 		if (which >= 0 && /[a-zA-Z0-9]/.test(words[which])) {
 			var q = $('q');
-			words[which] = suggestion.innerHTML.replace(/\s+\S+$/,'');
+			words[which] = suggestion.innerHTML.replace(/\s*\S+\(.*\)\S+$/,'');
+			if (words[which] === '') {
+				return false;
+				}
 			if (which === words.length-1) {
 				words.push(' ');
 				}
@@ -108,6 +111,7 @@ if (!CablegateObject) {
 			q.setCaretPosition(details.sOffset + words[which].length + words[which+1].length);
 			syncSuggestions(); // caret moved, resync
 			}
+		return true;
 		};
 
 	var selectSuggestion = function(index) {
