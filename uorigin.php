@@ -61,7 +61,6 @@ $title = sprintf('Unreleased cables from %s', htmlentities($origin));
 <meta name="keywords" content="cablegate, wikileaks, cables, history">
 <meta name="description" content="History of all cables on this site">
 <?php include('mootools-core-1.3-loader.inc'); ?>
-<script type="text/javascript" src="cablegate-core.js"></script>
 <script type="text/javascript" src="cablegate-uorigin.js"></script>
 </head>
 <body>
@@ -333,7 +332,7 @@ echo '<tr>', implode('',$xaxis_label_html);
 	}
 ?>
 </div>
-<?php include('contact-inc.html'); ?>
+<?php include('footer.php'); ?>
 </div><!-- end main -->
 </body>
 </html><?php
