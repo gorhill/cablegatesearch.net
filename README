@@ -78,15 +78,15 @@ FILES
 - cart.php:
 	A tool to collate and persist a specific set of cables
 
-- contact-inc.html:
-	Contact, credits, etc. This file is included as footer
-	in the main PHP files.
-
 - extras.php:
 	Unsorted features are put in there
 
 - finediff.php:
 	FineDiff class, used to by cable.php to render cable content
+
+- footer.php:
+	Contact, credits, etc. This file is included as footer
+	in the main PHP files.
 
 - header.php:
 	The HTML code shared by all web pages, which appears just below
@@ -128,7 +128,6 @@ FILES
 - Javascript files:
 	cablegate.js: more stuff (need to restructure these files)
 	cablegate-cart.js: cart management
-	cablegate-core.js: common, basic stuff
 	cablegate-search.js: list of suggestions for search keyword
 	mootools-more.js: Mootools More, for visual effects, date handling, etc.
 
