@@ -63,8 +63,7 @@ div {margin:0;padding:0}
 <meta name="keywords" content="cablegate, wikileaks, full, text, search, browse">
 <meta name="description" content="Cablegate's cable: Browse by tags">
 <?php include('mootools-core-1.3-loader.inc'); ?>
-<script type="text/javascript" src="mootools-more-browser.js"></script>
-<script type="text/javascript" src="cablegate-core.js"></script>
+<script type="text/javascript" src="mootools-more.js"></script>
 </head>
 <body>
 <h1>Cablegate's cables: Browse by tags</h1>
@@ -218,7 +217,7 @@ else {
 
 ?>
 </div>
-<?php include('contact-inc.html'); ?>
+<?php include('footer.php'); ?>
 </div><!-- end main -->
 </body>
 </html>
