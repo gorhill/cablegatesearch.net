@@ -77,7 +77,7 @@ li.release > ul > li.nc:before {content:"\3D\2009"}
 .r {color:red}
 .nc {color:gray}
 a.magnet {margin-left:3em;font-size:smaller;color:gray;cursor:pointer}
-.cable-tip .tip {border:1px solid gray;padding:4px 8px;width:20em;background-color:#fffff8;border-radius:5px;-moz-border-radius:5px;font-size:12px;font-variant:small-caps}
+.cable-tip {font-variant:small-caps}
 </style>
 <title>Cablegate's cables: Publishing history for <?php echo $title_period; ?></title>
 <meta http-equiv="Content-Language" content="en">
@@ -86,7 +86,6 @@ a.magnet {margin-left:3em;font-size:smaller;color:gray;cursor:pointer}
 <meta name="description" content="History of all cables on this site">
 <?php include('mootools-core-1.3-loader.inc'); ?>
 <script type="text/javascript" src="mootools-more.js"></script>
-<script type="text/javascript" src="cablegate-core.js"></script>
 </head>
 <body>
 <h1>Cablegate's cables: Publishing history for <?php echo $title_period; ?></h1>
@@ -330,7 +329,7 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 	echo "\n</ul>\n";
 	}
 ?>
-<?php include('contact-inc.html'); ?>
+<?php include('footer.php'); ?>
 </div><!-- end main -->
 <script type="text/javascript">
 <!--
