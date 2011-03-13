@@ -395,10 +395,6 @@ if (!CablegateObject) {
 			e.addEvent('keyup',function(){$('clear-q').setStyle('visibility',this.value?'visible':'hidden');});
 			}
 		// to handle click on field reset button
-		e=$('clear-q');
-		if (e){
-			e.addEvent('click',function(){window.location.href='search.php'+($('form').getElement('input[type="radio"][value="0"]').checked?'?sort=0':'');});
-			}
 		e = $('classification-filters');
 		if (e) {
 			co.updateFilterStats();
