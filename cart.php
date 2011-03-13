@@ -69,7 +69,6 @@ if (!$cart_is_empty ) {
 </style>
 <![endif]-->
 <script type="text/javascript" src="mootools-more.js"></script>
-<script type="text/javascript" src="cablegate-core.js"></script>
 <script type="text/javascript" src="cablegate-cart.js"></script>
 <script type="text/javascript" src="cablegate.js"></script>
 </head>
@@ -254,7 +253,7 @@ $$('#export > div:first-child + div > div').each(function(container){
 // -->
 </script>
 <?php } ?>
-<?php include('contact-inc.html'); ?>
+<?php include('footer.php'); ?>
 </div>
 </div>
 </body>
