@@ -427,11 +427,11 @@ function get_cable_content($cable_id, $cable_version = 0) {
 
 	// determine whether diff can be seen
 	$showdiff = $cable_version !== 0;
-	$sensitive = $showdiff && !($answer['status'] & 0x04);
-//	if ( $sensitive && !preg_match('/^(127\\.0\\.\\d+\\.\\d+)$/', $_SERVER["REMOTE_ADDR"]) ) {
-//		$answer['content'] = '<span class="webmaster-comment">[Edit history of this cable is withheld. At least one redaction which consists of a blacked out passage has been detected in a later release.]</span>';
-//		return $answer;
-//		}
+	$sensitive = $showdiff && ($answer['status'] & 0x04);
+	if ( $sensitive && !preg_match('/^(127\\.0\\.\\d+\\.\\d+)$/', $_SERVER["REMOTE_ADDR"]) ) {
+		$answer['content'] = '<span class="webmaster-comment">[Edit history of this cable is withheld because of its senstivity.]</span>';
+		return $answer;
+		}
 
 	// get cable content
 	if ( !$cable_version ) {
