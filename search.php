@@ -59,7 +59,6 @@ $qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
 </style>
 <![endif]-->
 <script type="text/javascript" src="mootools-more.js"></script>
-<script type="text/javascript" src="cablegate-core.js"></script>
 <script type="text/javascript" src="cablegate-search.js"></script>
 <script type="text/javascript" src="cablegate-cart.js"></script>
 <script type="text/javascript" src="cablegate.js"></script>
@@ -279,7 +278,7 @@ var CablegateGetNextInfo={
 </script>
 <?php } ?>
 </div>
-<?php include('contact-inc.html'); ?>
+<?php include('footer.php'); ?>
 </body>
 </html>
 <?php
