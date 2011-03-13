@@ -13,7 +13,6 @@ a:hover {color:#004;opacity:0.8}
 #intro {font-size:x-small;color:gray}
 </style>
 <?php include('mootools-core-1.3-loader.inc'); ?>
-<script type="text/javascript" src="cablegate-core.js"></script>
 <title>Cablegate's cables: Full-text search engine / Release notes</title>
 <meta http-equiv="Content-Language" content="en">
 <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
@@ -49,7 +48,7 @@ a:hover {color:#004;opacity:0.8}
  </ul>
  </ul>
 </div>
-<?php include('contact-inc.html'); ?>
+<?php include('footer.php'); ?>
 </div><!-- end main -->
 </body>
 </html>
