@@ -16,7 +16,6 @@ db_open_compressed_cache($cache_id);
 .g {color:#0a0}
 </style>
 <?php include('mootools-core-1.3-loader.inc'); ?>
-<script type="text/javascript" src="cablegate-core.js"></script>
 <title>Cablegate's cables: Extras</title>
 <meta http-equiv="Content-Language" content="en">
 <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
@@ -81,7 +80,7 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 echo mysql_error();
 ?>
 </div>
-<?php include('contact-inc.html'); ?>
+<?php include('footer.php'); ?>
 </div><!-- end main -->
 </body>
 </html><?php
