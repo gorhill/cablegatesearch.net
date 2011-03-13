@@ -65,7 +65,6 @@ ins {color:#080;background:#dfd;text-decoration:none}
 </style>
 <?php include('mootools-core-1.3-loader.inc'); ?>
 <script src="mootools-more.js" type="text/javascript"></script>
-<script src="cablegate-core.js" type="text/javascript"></script>
 <script src="cablegate-cart.js" type="text/javascript"></script>
 <title><?php echo $title; ?></title>
 <meta http-equiv="Content-Language" content="en">
@@ -113,28 +112,36 @@ $sqlquery = "
 		`change_time` ASC
 	";
 if ( $sqlresult = mysql_query($sqlquery) ) {
-	$changed_at_least_once = 0;
 	$history_details = array(
-		array('color'=>'#000', 'prompts'=>array('','')),
-		array('color'=>'darkgreen', 'prompts'=>array('First published','Published again')),
-		array('color'=>'blue', 'prompts'=>array('Modified','Modified')),
-		array('color'=>'maroon', 'prompts'=>array('Removed','Removed')),
-		array('color'=>'gray', 'prompts'=>array('Re-added without modification','Re-added without modification')),
+		array('color'=>'#000', 'prompt'=>''),
+		array('color'=>'darkgreen', 'prompt'=>'First published'),
+		array('color'=>'blue', 'prompt'=>'Modified'),
+		array('color'=>'maroon', 'prompt'=>'Removed'),
+		array('color'=>'gray', 'prompt'=>'Re-added without modification'),
 		);
+	$num_changes = mysql_num_rows($sqlresult);
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$change = (int)$sqlrow['change'];
 		$change_time = (int)$sqlrow['change_time'];
 		assert($change < count($history_details));
-		$history[] = sprintf(
-			'<a style="color:%s;%s" href="cable.php?id=%s%s" rel="nofollow">%s on %s UTC</a>',
-			$history_details[$change]['color'],
-			$cable_version === $change_time ? 'font-weight:bold' : '',
-			$canonical_id,
-			($cable_version === $change_time) ? '' : "&amp;version={$change_time}",
-			$history_details[$change]['prompts'][$changed_at_least_once],
+		$text = sprintf(
+			'%s on %s UTC',
+			$history_details[$change]['prompt'],
 			date('D, j M Y H:i',$change_time)
 			);
-		$changed_at_least_once = 1;
+		if ( $num_changes > 1 ) {
+			$history[] = sprintf(
+				'<a style="color:%s;%s" href="cable.php?id=%s%s" rel="nofollow">%s</a>',
+				$history_details[$change]['color'],
+				$cable_version === $change_time ? 'font-weight:bold' : '',
+				$canonical_id,
+				($cable_version === $change_time) ? '' : "&amp;version={$change_time}",
+				$text
+				);
+			}
+		else {
+			$history[] = $text;
+			}
 		}
 	}
 ?>
