@@ -3,16 +3,12 @@
 // Depends on:
 //   Mootools More Element.Forms / http://mootools.net/docs/more/Element/Element.Forms
 
-var CablegateObject;
-if (!CablegateObject) {
-	CablegateObject = {};
-	}
-
 (function(){
-	var co = CablegateObject;
-	co.suggestionKeyupTimer = null;
-	co.suggestionCache = {};
-	co.suggestionSelected = -1;
+	var co = {
+		suggestionKeyupTimer: null,
+		suggestionCache: {},
+		suggestionSelected: -1
+		};
 
 	// Returns the content of the input field as an
 	// alternate list of word and non-word segments,
@@ -44,6 +40,7 @@ if (!CablegateObject) {
 			end = beg + word.length;
 			if (caret < end || (/[a-zA-Z0-9]/.test(word) && caret === end)) {break;}
 			}
+
 		return {
 			which: i < n ? i : -1,
 			sOffset: beg,
@@ -63,7 +60,7 @@ if (!CablegateObject) {
 		};
 
 	var suggestionsRequest = new Request.JSON({
-		url:'cablegate-do.php',
+		url: 'cablegate-do.php',
 		onSuccess: suggestionsRequestHandler
 		});
 
@@ -242,6 +239,27 @@ if (!CablegateObject) {
 			blur: blurHandler
 			});
 		q.getParent('form').addEvent('submit', submitHandler);
+		q.addEvent('keyup', function(){
+			$('clear-q').setStyle('visibility',this.value?'visible':'hidden');
+			});
+		// to handle click on field reset button
+		var e = $('clear-q');
+		e.addEvent('click',function(){
+			if (!/q=[^&]/.test(window.location.href)){
+				this.setStyle('visibility', 'hidden');
+				var q = $('q');
+				q.value = '';
+				q.focus();
+				}
+			else {
+				var uri = 'search.php';
+				if ($('form').getElement('input[type="radio"][value="0"]').checked){
+					uri += '?sort=0';
+					}
+				window.location.href = uri;
+				}
+			return false;
+			});
 		};
 
 	window.addEvent('domready', function(){init();});
