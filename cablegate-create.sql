@@ -54,7 +54,7 @@ CREATE TABLE `cablegate_cables` (
   `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
   `canonical_id` varchar(25) NOT NULL DEFAULT '',
   `classification_id` tinyint(3) unsigned NOT NULL DEFAULT '0',
-  `origin_id` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `origin_id` mediumint(4) unsigned NOT NULL DEFAULT '0',
   `cable_time` int(11) NOT NULL DEFAULT '0',
   `release_time` int(11) NOT NULL DEFAULT '0',
   `change_time` int(11) NOT NULL DEFAULT '0',
@@ -218,4 +218,4 @@ CREATE TABLE `cablegate_utagassoc` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2011-03-05 21:03:15
+-- Dump completed on 2011-05-11  8:13:12
