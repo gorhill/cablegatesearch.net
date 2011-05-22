@@ -77,7 +77,7 @@ li.release > ul > li.nc:before {content:"\3D\2009"}
 .r {color:red}
 .nc {color:gray}
 a.magnet {margin-left:3em;font-size:smaller;color:gray;cursor:pointer}
-.cable-tip {font-variant:small-caps}
+.cable-tip {font-variant:small-caps;max-width:20em}
 </style>
 <title>Cablegate's cables: Publishing history for <?php echo $title_period; ?></title>
 <meta http-equiv="Content-Language" content="en">
@@ -96,6 +96,35 @@ if ( $request_period != $now_period ) {
 ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span><?php include('header.php'); ?>
 <div id="main">
 <?php
+function canonical_compare($a, $b) {
+	// isolate parts
+	if ( preg_match('/^(\\d+)(\\D+)(\\d+)$/', $a, $match) ) {
+		$a_year = intval($match[1]) + 1900;
+		$a_origin = $match[2];
+		$a_id = intval($match[3]);
+		if ( preg_match('/^(\\d+)(\\D+)(\\d+)$/', $b, $match) ) {
+			$b_year = intval($match[1]) + 1900;
+			$b_origin = $match[2];
+			$b_id = intval($match[3]);
+			$r = strcmp($a_origin, $b_origin);
+			if ( !$r ) {
+				if ( $a_year < 1950 ) {
+					$a_year += 100;
+					}
+				if ( $b_year < 1950 ) {
+					$b_year += 100;
+					}
+				$r = $b_year - $a_year;
+				if ( !$r ) {
+					$r = $b_id - $a_id;
+					}
+				}
+			return $r;
+			}
+		}
+	return strcmp($a, $b);
+	}
+
 // overview
 // 8 hours is added to release time since the server is on the west coast
 // TODO: avoid hard coding tz offset
@@ -313,7 +342,7 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 			date('YmjHi',$release_time),
 			htmlentities($release_magnets[$release_time])
 			);
-		krsort($change_details);
+		uksort($change_details, 'canonical_compare');
 		foreach ( $change_details as $canonical_id => &$change ) {
 			printf(
 				'<li%s><span%s></span><a href="cable.php?id=%s">%s</a>',
@@ -350,13 +379,32 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 			}
 		};
 	var tipRequest = function(e) {
-		// request subject from server, request a bunch
-		// while at it
-		var atags = e.getParent('ul').getElements('a[href^="cable.php"]');
-		var canonicalIds = [];
-		atags.each(function(atag){
-			canonicalIds.push(atag.innerHTML);
-			});
+		var canonicalIds = [e.innerHTML];
+		// request subject from server, request a bunch while at it
+		var li = e.getParent('li');
+		var sibling = li;
+		var atag;
+		while (canonicalIds.length < 15) {
+			sibling = sibling.getPrevious('li');
+			if (!sibling) {
+				break;
+				}
+			atag = sibling.getElement('a[href^="cable.php"]');
+			if (atag && atag.retrieve('tip:text') == '...') {
+				canonicalIds.push(atag.innerHTML);
+				}
+			}
+		sibling = li;
+		while (canonicalIds.length < 30) {
+			sibling = sibling.getNext('li');
+			if (!sibling) {
+				break;
+				}
+			atag = sibling.getElement('a[href^="cable.php"]');
+			if (atag && atag.retrieve('tip:text') == '...') {
+				canonicalIds.push(atag.innerHTML);
+				}
+			}
 		var args = {
 			command: 'get_cable_subjects',
 			canonicalIds: canonicalIds.join(',')
