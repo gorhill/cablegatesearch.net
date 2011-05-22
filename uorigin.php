@@ -61,6 +61,7 @@ $title = sprintf('Unreleased cables from %s', htmlentities($origin));
 <meta name="keywords" content="cablegate, wikileaks, cables, history">
 <meta name="description" content="History of all cables on this site">
 <?php include('mootools-core-1.3-loader.inc'); ?>
+<script type="text/javascript" src="mootools-more.js"></script>
 <script type="text/javascript" src="cablegate-uorigin.js"></script>
 </head>
 <body>
