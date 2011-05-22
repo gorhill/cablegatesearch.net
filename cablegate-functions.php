@@ -366,6 +366,8 @@ function webmaster_comment_to_link($matches) {
 
 function get_cable_content($cable_id, $cable_version = 0) {
 	global $CABLE_CONTENT_SEPARATOR;
+	global $WIKILEAKS_HOST;
+
 	if ( is_string($cable_id) && !ctype_digit($cable_id) ) {
 		$canonical_id = $cable_id;
 		}
@@ -403,7 +405,9 @@ function get_cable_content($cable_id, $cable_version = 0) {
 		}
 
 	$date_details = getdate($sqlrow['cable_time']);
-	$wikileaksURL = sprintf('http://213.251.145.96/cable/%d/%02d/%s.html',
+	$wikileaksURL = sprintf(
+		'http://%s/cable/%d/%02d/%s.html',
+		$WIKILEAKS_HOST,
 		$date_details['year'],
 		$date_details['mon'],
 		urlencode($sqlrow['canonical_id'])
@@ -413,7 +417,7 @@ function get_cable_content($cable_id, $cable_version = 0) {
 		'id' => $sqlrow['id'],
 		'canonicalId' => $sqlrow['canonical_id'],
 		'cableURL' => sprintf('<a target="_blank" href="cable.php?id=%s">%s</a>',urlencode($sqlrow['canonical_id']),$sqlrow['canonical_id']),
-		'wikileakURL' => sprintf('<a target="_blank" href="%s">%s</a>',$wikileaksURL,htmlentities($wikileaksURL)),
+		'wikileakURL' => sprintf('<a target="_blank" href="%s">%s</a>', $wikileaksURL, htmlentities($wikileaksURL)),
 		'origin' => $sqlrow['origin'],
 		'cableTime' => str_replace(' ','&nbsp;',date('D, j M Y H:i',$sqlrow['cable_time'])).'&nbsp;UTC',
 		'releaseTime' => str_replace(' ','&nbsp;',date('D, j M Y H:i',$sqlrow['release_time'])).'&nbsp;UTC',
