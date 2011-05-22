@@ -242,13 +242,21 @@ if (!CablegateObject) {
 		};
 
 	co.filterCableRow = function(tr) {
-		// what:
+		var visible = true;
+		// classification
+		var e = tr.getElement('td:first-child');
 		//   bit 0 = 1: unclassified
 		//   bit 1 = 2: confidential
 		//   bit 2 = 4: secret
-		what = co.classificationFilter || 0xFF;
-		var td = tr.getElement('.clu,.clc,.cls');
-		if (what & {'clu':1,'clc':2,'cls':4}[/\bcl[csu]\b/.exec(td.className)]) {
+		var classificationFilter = co.classificationFilter || 0xFF;
+		visible = classificationFilter & {'clu':1,'clc':2,'cls':4}[/\bcl[csu]\b/.exec(e.className)];
+		// origin
+		if (visible) {
+			e = tr.getElement('td:nth-of-type(3) > a + a');
+			var originFilter = co.originFilter || '';
+			visible = originFilter == '' || e.innerHTML == originFilter;
+			}
+		if (visible) {
 			tr.removeClass('dimmed');
 			}
 		else {
@@ -257,38 +265,69 @@ if (!CablegateObject) {
 		};
 
 	co.filterCableRows = function() {
-		// what:
-		//   bit 0 = 1: unclassified
-		//   bit 1 = 2: confidential
-		//   bit 2 = 4: secret
-		what = co.classificationFilter || 0xFF;
-		var bits = {'clu':1,'clc':2,'cls':4};
-		$$('td.clu,td.clc,td.cls').each(function(td){
-			var tr = td.getParent('tr');
-			if (what & bits[/\bcl[csu]\b/.exec(td.className)]) {
-				tr.removeClass('dimmed');
-				}
-			else {
-				tr.addClass('dimmed');
-				}
+		$$('#cable-list tr[id^="cableid-"]').each(function(tr){
+			co.filterCableRow(tr);
 			});
 		};
 
 	co.updateFilterStats = function() {
-		var sel = $('classification-filters');
-		if (!sel) {return;}
-		var ns = $$('td.cls').length,
-			nc = $$('td.clc').length,
-			nu = $$('td.clu').length,
-			na = ns+nc+nu,
-			stats = [0, na, ns, ns+nc, nc, nc+nu, nu],
-			opt,
-			stat;
-		for (var i=1; i<stats.length; i++) {
-			opt = sel.getElement('option:nth-of-type('+String(i)+')');
-			stat = stats[i];
-			opt.set('text',opt.get('text').replace(/^(.*?)(\s[\S]+\d+.*)?$/,'$1 ('+String(stat)+')'))
-			opt.disabled = !stat ? 'disabled' : '';
+		// collect stats
+		var classifications = {cls:0, clc:0, clu:0};
+		var origins = {};
+		var nCables = 0;
+		var e, origin, sel, opt, i, n;
+		$$('#cable-list tr[id^="cableid-"]').each(function(tr){
+			e = tr.getElement('td:first-child');
+			classifications[e.className]++;
+			e = tr.getElement('td:nth-of-type(3) > a + a');
+			origin = e.innerHTML;
+			if (origins[origin] === undefined) {
+				origins[origin] = 1;
+				}
+			else {
+				origins[origin]++;
+				}
+			nCables++;
+			});
+		// classification selector
+		sel = $('classification-filters');
+		if (sel) {
+			var ns = classifications.cls,
+				nc = classifications.clc,
+				nu = classifications.clu,
+				stats = [0, nCables, ns, ns+nc, nc, nc+nu, nu];
+			for (i=1, n=stats.length; i<n; i++) {
+				opt = sel.getElement('option:nth-of-type('+String(i)+')');
+				opt.set('text',opt.get('text').replace(/^(.*?)(\s[\S]+\d+.*)?$/,'$1 ('+String(stats[i])+')'))
+				opt.disabled = !stats[i] ? 'disabled' : '';
+				}
+			}
+		// origin selector
+		sel = $('origin-filters');
+		if (sel) {
+			// remember current selection
+			var filter = sel.options[sel.selectedIndex].value;
+			// empty current list
+			while (sel.length > 1) {sel.remove(1);}
+			// refresh number of cables
+			opt = sel.options[0];
+			opt.set('text',opt.get('text').replace(/^(.*?)(\s[\S]+\d+.*)?$/,'$1 ('+String(nCables)+')'))
+			// fill with new choices
+			var options = [''];
+			for (origin in origins) {
+				options.push(origin);
+				}
+			options.sort();
+			for (i=1, n=options.length; i<n; i++) {
+				origin = options[i];
+				opt = document.createElement('option');
+				opt.text = origin + ' ('+String(origins[origin])+')';
+				opt.value = origin;
+				sel.add(opt, null);
+				if (opt.value == filter) {
+					sel.selectedIndex = i;
+					}
+				}
 			}
 		};
 
@@ -394,12 +433,21 @@ if (!CablegateObject) {
 		if (e){
 			e.addEvent('keyup',function(){$('clear-q').setStyle('visibility',this.value?'visible':'hidden');});
 			}
-		// to handle click on field reset button
+		// initialize filter selectors
+		co.updateFilterStats();
+		// handle click on classification selector
 		e = $('classification-filters');
 		if (e) {
-			co.updateFilterStats();
 			e.addEvent('change', function(){
 				co.classificationFilter = parseInt(this.value,10);
+				co.filterCableRows();
+				});
+			}
+		// handle click on origin selector
+		e = $('origin-filters');
+		if (e) {
+			e.addEvent('change', function(){
+				co.originFilter = this.value;
 				co.filterCableRows();
 				});
 			}
