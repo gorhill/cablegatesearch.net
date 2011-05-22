@@ -73,13 +73,6 @@ FILES
 	contains functions reused across multiple PHP files. It needs
 	cleanup.
 
-- cablegate_cables_canonical2id_map.txt:
-	This is a serialized PHP associative array, which maps
-	"canonical id" (aka Wikileaks' "reference id") to cable id (integer).
-	This file is useful if you want to generate your own database
-	content, as you should preserve the mapping documented in this
-	file. This ensure that carts are really persistent.
-
 - cablegate-create.sql:
 	MySQL statements to create the structure of the
 	tables required to run the site
@@ -90,6 +83,20 @@ FILES
 	of the latest snapshot of released cables. Since this file is
 	way too large to host here (currently ~20MB), download it from:
 	http://www.cablegatesearch.net/cablegate-create-and-populate.sql.7z
+
+- cables.7z:
+	Contains all the unique versions of all the cables published by
+	Wikileaks so far. Because of its size (currently 40-50MB), this
+	7-Zip file is only available on the server, rather than being committed
+	here: http://www.cablegatesearch.net/cables.7z
+	The filename of each cable is composed as follow:
+	{release date as YYYMMDDHHmm}_{A 6-digit release id in DB}_{A 6-digit cable id in DB}_{canonical id}.html
+	If the database needs to be rebuilt from scratch, it will be
+	possible to keep the same id as before, which is especially important
+	for the cart.php feature.
+	Keep in mind a same cable could have been published more than
+	once. A cable file of size 0 means the cable had been removed from
+	the release.
 
 - cart.php:
 	A tool to collate and persist a specific set of cables
