@@ -1,5 +1,6 @@
 <?php
 $CABLE_CONTENT_SEPARATOR = ']]|||[[';
+$WIKILEAKS_HOST = 'wikileaks.fi';
 $CART_BASE64_STR = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 
 function token2int($tok) {
