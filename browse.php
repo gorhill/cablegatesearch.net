@@ -9,12 +9,12 @@ $stack_of_tags = array();
 if ( isset($_REQUEST['tags']) && preg_match('/^\\d+(,\\d+)*$/',$_REQUEST['tags'],$matches) ) {
 	$a = explode(',',$_REQUEST['tags']);
 	foreach ( $a as $v ) {
-		$stack_of_tags[] = (int)$v;
+		$stack_of_tags[] = intval($v);
 		}
 	}
 $cache_id = "browse_" . implode('-',$stack_of_tags);
 if ( !db_output_compressed_cache($cache_id) ) {
-db_open_compressed_cache($cache_id);
+if ( count($stack_of_tags) < 3 ) { db_open_compressed_cache($cache_id); }
 // -----
 $MAX_COUNT = 300;
 $MAX_FONTSIZE = 48;
@@ -194,7 +194,7 @@ else {
 			$num_cables = (int)$sqlrow['num_cables'];
 			$definition = preg_replace('/;.*$/','',$sqlrow['definition']);
 			$definition = preg_replace('/^(consulate|embassy) /i','',$definition);
-			$fontsize = (int)round(($num_cables - $min_num_cables) * $FONT_RANGE / $range + $MIN_FONTSIZE);
+			$fontsize = $range > 0 ? (int)round(($num_cables - $min_num_cables) * $FONT_RANGE / $range + $MIN_FONTSIZE) : $DEFAULT_FONTSIZE;
 			printf(
 				'<div class="t%d"><a rel="nofollow" style="font-size:%dpx;line-height:%dpx" href="browse.php?tags=%d" title="&ldquo;%s&rdquo;: %d cable%s">%s</a></div>',
 				$sqlrow['type'],
