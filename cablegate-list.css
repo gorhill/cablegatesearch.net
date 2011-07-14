@@ -6,32 +6,34 @@
 #cable-list tr[id^="cableid-"].dimmed {display:none;opacity:0.1}
 #cable-list tr[id^="cableid-"].dimmed:hover {opacity:0.25}
 #cable-list th {padding:3px;border:0;border-bottom:1px solid white;vertical-align:top;text-align:left;font-weight:normal;font-size:12px}
-#cable-list td {margin:0;border:0;border-bottom:1px solid white;padding:4px 6px 4px 2px;vertical-align:top}
+#cable-list th:first-child + th {padding-left:24px;}
+#cable-list td {margin:0;border:0;border-bottom:1px solid white;padding:6px 6px 8px 2px}
 #cable-list td:first-child {width:0.25em}
-#cable-list td:first-child + td {width:6em}
+#cable-list td:first-child + td {padding-left:24px;width:6em;font-size:11.5px}
+#cable-list td:first-child + td.reported {background:url('knewsletter.png') no-repeat 4px 8px}
 #cable-list tr > th:first-child + th + th + th {font-size:smaller;text-align:right}
 #cable-list tr > td:first-child + td + td + td {width:5em;font-size:smaller;color:#888;text-align:right;white-space:nowrap}
 @media screen and (max-width:640px) {
  #cable-list tr > th:first-child + th + th + th {display:none}
  #cable-list tr > td:first-child + td + td + td {display:none}
  }
+#cable-list tr[id^="cableid-"] > td:first-child + td,
+#cable-list tr[id^="cableid-"] > td:first-child + td + td + td {vertical-align:top}
 .clu {background:#aaffba}
 .cluc {background:#d4f1b1}
 .clc {background:#ffe4aa}
 .clcs {background:#ffc6aa}
 .cls {background:#ffaaaa}
+.noforn {background-image:url('noforn.png');background-repeat:no-repeat;background-position:left 6px}
 #cable-list tr > td:first-child + td {white-space:nowrap}
-#cable-list tr > td:first-child + td + td.expandable {padding:2px 2px 2px 15px;background:transparent url('open.png') no-repeat 2px 4px}
-#cable-list tr > td:first-child + td + td.collapsible {padding:2px 2px 2px 15px;background:transparent url('close.png') no-repeat 2px 4px}
-@media screen and (max-width:640px) {
- #cable-list tr > td:first-child + td + td.expandable {padding:2px;background:transparent none}
- #cable-list tr > td:first-child + td + td.collapsible {padding:2px;background:transparent none}
- }
 #cable-list tr[id^="cableid-"] > td:first-child + td + td {color:#aaa}
-#cable-list tr > td:first-child + td + td > a {font:small-caps 14px sans-serif}
+#cable-list tr[id^="cableid-"] > td:first-child + td + td > span {margin-right:2px;display:inline-block;width:11px;height:11px;position:relative;top:1px;cursor:pointer}
+#cable-list tr[id^="cableid-"] > td:first-child + td + td.expandable > span {background:transparent url('collapsed.png') no-repeat left}
+#cable-list tr[id^="cableid-"] > td:first-child + td + td.collapsible > span {background:transparent url('expanded.png') no-repeat left}
+#cable-list tr[id^="cableid-"] > td:first-child + td + td > a {font:small-caps 14px "Lucida Sans Unicode",sans-serif}
 #cable-list .added,.added:hover {color:#060}
 #cable-list .removed,.removed:hover {color:#800}
-#cable-list tr > td:first-child + td + td > a ~ a {color:#888}
+#cable-list tr[id^="cableid-"] > td:first-child + td + td > a ~ a {color:#888}
 #cable-list .cable-preview {margin-top:0.2em;border:1px solid #aaa;padding:0;color:#000;background-color:transparent;font-weight:normal}
 #cable-list .cable-preview > div:first-child {border:0;padding:2px 2px 0.25em 2px;font-size:12px;background-color:#def}
 #cable-list .cable-preview > div:first-child > img {vertical-align:middle;cursor:pointer}
