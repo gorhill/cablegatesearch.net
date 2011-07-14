@@ -1,27 +1,36 @@
 <?php
 include_once("cacher.php");
 include_once("cablegate-functions.php");
+include_once("cablegate-search-functions.php");
 
 header_cache(120);
 
 $raw_query = isset($_REQUEST['q']) ? $_REQUEST['q'] : '';
 $canonical_query_name = get_canonical_query_name($raw_query);
-$sort = isset($_REQUEST['sort']) && is_numeric($_REQUEST['sort']) ? max((int)min(floor((int)$_REQUEST['sort']),1),0) : 1;
+$sort = isset($_REQUEST['sort']) && ctype_digit($_REQUEST['sort'])
+      ? max(min(intval($_REQUEST['sort']),1),0)
+      : 1;
 $year_upper_limit = $sort ? 2099 : 2010;
 $year_lower_limit = $sort ? 2010 : 1966;
-$yt = isset($_REQUEST['yt']) && is_numeric($_REQUEST['yt']) ? max(min((int)floor((int)$_REQUEST['yt']),$year_upper_limit),$year_lower_limit) : $year_upper_limit;
-$mt = isset($_REQUEST['mt']) && is_numeric($_REQUEST['mt']) ? max(min((int)floor((int)$_REQUEST['mt']),12),1) : 12;
+$month_lower_limit = 1;
+$month_upper_limit = 12;
+$yt = isset($_REQUEST['yt']) && ctype_digit($_REQUEST['yt'])
+    ? max(min(intval($_REQUEST['yt']), $year_upper_limit), $year_lower_limit)
+    : $year_upper_limit;
+$mt = isset($_REQUEST['mt']) && ctype_digit($_REQUEST['mt'])
+    ? max(min(intval($_REQUEST['mt']), $month_upper_limit), $month_lower_limit)
+    : $month_upper_limit;
 
 $cache_id = sprintf('searchpage_%d_%d-%02d_%s', $sort, $yt, $mt, $canonical_query_name);
 if ( !db_output_compressed_cache($cache_id) ) {
 db_open_compressed_cache($cache_id);
 // -----
-$prepdata = preprocess_query($raw_query);
+$prepdata = preprocess_query($raw_query, $sort === 0, $sort === 1);
 $title = "Cablegate's cables: Full-text search";
 if ( !empty($prepdata['normalized_query']) ) {
 	$title .= " for &ldquo;{$prepdata['normalized_query']}&rdquo;";
 	}
-$qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
+$qexpressions = stringify_expressions($prepdata['expressions'], '-', ' ');
 
 ?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -65,7 +74,7 @@ $qexpressions = stringify_expressions($prepdata['expressions'],'-',' ');
 </head>
 <body>
 <h1><?php echo $title; ?></h1>
-<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gorhill" data-text="<?php echo $title, ' #cablegate'; ?>" data-url="http://www.cablegatesearch.net/search.php<?php if ( !empty($prepdata['urlencoded_query']) ) { echo "?q={$prepdata['urlencoded_query']}"; } ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
+<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="<?php echo $title, ' #cablegate'; ?>" data-url="http://www.cablegatesearch.net/search.php<?php if ( !empty($prepdata['urlencoded_query']) ) { echo "?q={$prepdata['urlencoded_query']}&sort={$sort}"; } ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
 <?php include('header.php'); ?>
 <div id="main">
 <div id="intro">This site is best viewed using a <a href="http://en.wikipedia.org/wiki/Acid3#Browsers_that_pass">modern, highly-compliant browser</a> <a href="http://acid3.acidtests.org/">(score >= 90)</a><noscript style="color:red">, with Javascript enabled</noscript>. <!--[if lte IE 8]> <span style="color:#c44">Internet Explorer 8 doesn't support all features, visual or otherwise, available on this page.</span> <![endif]--><?php
@@ -84,10 +93,10 @@ if ( ($sqlresult = mysql_query($sqlquery)) &&
      ($sqlrow = mysql_fetch_row($sqlresult)) ) {
 	$last_time_updated = date('D, j M Y, H:i:00', (int)$sqlrow[0]) . ' UTC';
 	}
-?>Database content based on a snapshot of <a href="http://<?php echo $WIKILEAKS_HOST; ?>/cablegate.html">Wikileaks' Cablegate</a> as of <span><?php echo $last_time_updated; ?></span> (<span class="since"><?php echo $last_time_updated; ?></span> ago). For more Cablegate resources on the web, see <a href="http://wlcentral.org/">WL Central&rsquo;s</a> <a href="http://wlcentral.org/cablegate">&ldquo;Cablegate Resources&rdquo;</a>. This site is provided as a free service in the name of public interest. I do not seek or accept donations, however I strongly encourage you to <a href="http://wikileaks.ch/Support.html">financially support Wikileaks</a>.</div>
+?>Database content based on a snapshot of <a href="http://<?php echo $WIKILEAKS_HOST; ?>/cablegate.html">Wikileaks' Cablegate</a> as of <span><?php echo $last_time_updated; ?></span> (<span class="since"><?php echo $last_time_updated; ?></span> ago). For more Cablegate resources on the web, see <a href="http://wlcentral.org/">WL Central&rsquo;s</a> <a href="http://wlcentral.org/cablegate">&ldquo;Cablegate Resources&rdquo;</a>. This site is provided as a free service in the name of public interest. I do not seek or accept donations, however I strongly encourage you to <a href="http://wikileaks.org/support.html">financially support Wikileaks</a>.</div>
 <form id="form" method="get" action="search.php">
 <div style="margin-top:1em">
-<div style="margin:0 1em 0 0;display:inline-block;position:relative;vertical-align:top">Keyword(s)<br><input id="q" type="text" value="<?php echo htmlentities($raw_query); ?>" name="q" maxlength="100"><div id="search-suggestions" style="display:none"></div><span id="qexpressions" style="display:none"><?php echo $qexpressions; ?></span><img id="clear-q" style="position:absolute;bottom:4px;right:4px;visibility:<?php echo empty($prepdata['normalized_query']) ? 'hidden' : 'visible'; ?>" src="edit-clear-2.png" width="16" height="16" alt="Reset" title="Reset query/results"></div><span style="margin:0 2em 0 0;display:inline-block;vertical-align:top"><br><input type="submit" value="Retrieve" style="width:6em"></span>&nbsp;<span style="display:inline-block;vertical-align:top">Sort by...<br><input type="radio" name="sort" value="0"<?php if (!$sort) { echo ' checked="checked"'; } ?>>Cable date<br><input type="radio" name="sort" value="1"<?php if ($sort) { echo ' checked="checked"'; } ?>>Leak date</span>
+<div style="margin:0 1em 0 0;display:inline-block;position:relative;vertical-align:top">Keyword(s)<br><input id="q" type="text" value="<?php echo htmlentities($raw_query); ?>" name="q" maxlength="100"><div id="search-suggestions" style="display:none"></div><span id="qexpressions" style="display:none"><?php echo $qexpressions; ?></span><img id="clear-q" style="position:absolute;bottom:4px;right:4px;visibility:<?php echo empty($prepdata['normalized_query']) ? 'hidden' : 'visible'; ?>" src="edit-clear-2.png" width="16" height="16" alt="Reset" title="Reset query/results"></div><span style="margin:0 2em 0 0;display:inline-block;vertical-align:top"><br><input type="submit" value="Retrieve" style="width:6em"></span>&nbsp;<span style="display:inline-block;vertical-align:top">Sort by...<br><input type="radio" name="sort" value="0"<?php if (!$sort) { echo ' checked="checked"'; } ?>>Cable date<br><input type="radio" name="sort" value="1"<?php if ($sort) { echo ' checked="checked"'; } ?>>Publication date</span>
 </div>
 </form>
 <div id="search-tips-toggle">Search tips...</div><ul id="search-tips">
@@ -100,59 +109,92 @@ if ( ($sqlresult = mysql_query($sqlquery)) &&
 </ul>
 <div style="margin:1em 0 1em 0;border-top:1px solid #aaa;height:1px"></div>
 <?php
-// query for list
-$column_names_lookup_by_sort = array('cable','change');
 
-$query = sprintf("
-	SELECT SQL_CALC_FOUND_ROWS
-		c.`id`,
-		c.`canonical_id`,
-		c.`cable_time`,
-		c.`change_time`,
-		(c.`status` & 0x01) AS `removed`,
-		(c.`status` & 0x02) AS `new_or_updated`,
-		cl.`classification`,
-		o.`origin`,
-		c.`subject`
-	FROM `cablegate_classifications` cl
-		INNER JOIN (`cablegate_origins` o
-		INNER JOIN %s
-		ON o.`id` = c.`origin_id`)
-		ON cl.`id` = c.`classification_id`
-	",
+
+// obtain total number of entries matching this subquery
+// *outside* any specific time range
+$num_cables_no_time_range = 0;
+$sqlquery = "SELECT count(*) FROM {$prepdata['subquery']}";
+if ( $sqlresult = mysql_query($sqlquery) ) {
+	$num_cables_no_time_range = intval(mysql_result($sqlresult, 0));
+	}
+
+// obtain total number of entries matching this subquery
+// *within* specified time range (if any)
+$column_names_lookup_by_sort = array('cable','change');
+if ( $yt < $year_upper_limit || $mt < $month_upper_limit ) {
+	$num_cables_no_limit = 0;
+	$sqlquery = sprintf(
+		  "SELECT count(*) "
+		. "FROM {$prepdata['subquery']} "
+		. "WHERE c.`%s_time` < UNIX_TIMESTAMP(DATE_ADD('%d-%02d-01',INTERVAL 1 MONTH))"
+		,
+		$column_names_lookup_by_sort[$sort],
+		$yt,
+		$mt
+		);
+	if ( $sqlresult = mysql_query($sqlquery) ) {
+		$num_cables_no_limit = intval(mysql_result($sqlresult, 0));
+		}
+	}
+else {
+	$num_cables_no_limit = $num_cables_no_time_range;
+	}
+
+// obtain the cable entries
+$query = sprintf(
+	  "SELECT "
+	.     "c.`id`,"
+	.     "c.`canonical_id`,"
+	.     "c.`cable_time`,"
+	.     "c.`change_time`,"
+	.     "c.`status`,"
+	.     "cl.`classification`,"
+	.     "o.`origin`,o.`country_id`,"
+	.     "c.`subject` "
+	. "FROM "
+	.     "`cablegate_classifications` cl "
+	.     "INNER JOIN ("
+	.         "`cablegate_origins` o "
+	.         "INNER JOIN %s "
+	.         "ON o.`id` = c.`origin_id`"
+	.         ") "
+	.     "ON cl.`id` = c.`classification_id` "
+	,
 	$prepdata['subquery']
 	);
 
 if ( !$sort ) {
-	$query .= sprintf("
-		WHERE
-			c.`%s_time` < UNIX_TIMESTAMP(DATE_ADD('%d-%02d-01',INTERVAL 1 MONTH))
-		",
+	$query .= sprintf(
+		"WHERE c.`%s_time` < UNIX_TIMESTAMP(DATE_ADD('%d-%02d-01',INTERVAL 1 MONTH))"
+		,
 		$column_names_lookup_by_sort[$sort],
 		$yt,
 		$mt
 		);
 	}
 
-$query .= sprintf("
-	ORDER BY
-		c.`%s_time` DESC,
-		c.`%s_time` DESC
-	LIMIT 100
-	",
+$query .= sprintf(
+	  "ORDER BY "
+	. "c.`%s_time` DESC,"
+	. "c.`%s_time` DESC,"
+	. "c.`id` DESC "
+	. "LIMIT 100"
+	,
 	$column_names_lookup_by_sort[$sort],
 	$column_names_lookup_by_sort[$sort ^ 1]
 	);
 // printf("<p>%s</p>", $query);
-// EXPLAIN SELECT SQL_CALC_FOUND_ROWS c.`id`, c.`canonical_id`, c.`cable_time`, c.`change_time`, (c.`status` & 0x01) AS `removed`, (c.`status` & 0x02) AS `new_or_updated`, cl.`classification`, o.`origin`, c.`subject` FROM `cablegate_classifications` cl INNER JOIN (`cablegate_origins` o INNER JOIN (`cablegate_cables` c INNER JOIN (SELECT `cable_id` FROM (SELECT a.`cable_id` FROM (SELECT DISTINCT `cable_id` FROM `cablegate_termassoc` ta INNER JOIN `cablegate_terms` t ON t.id = ta.term_id WHERE t.`term` LIKE 'oil%') a INNER JOIN (SELECT DISTINCT `cable_id` FROM `cablegate_termassoc` ta INNER JOIN `cablegate_terms` t ON t.id = ta.term_id WHERE t.`term` LIKE 'bush%') b ON a.`cable_id` = b.`cable_id`) a) t ON t.cable_id = c.`id`) ON o.`id` = c.`origin_id`) ON cl.`id` = c.`classification_id` ORDER BY c.`change_time` DESC, c.`cable_time` DESC LIMIT 100 
+
 $result = mysql_query($query);
-if (!$result) { exit(mysql_error()); }
+if (!$result) {
+	exit(mysql_error());
+	}
 $num_cables = mysql_num_rows($result);
-$num_cables_no_limit = (int)mysql_result(mysql_query("SELECT FOUND_ROWS()"),0);
 ?>
-<p><span style="font-size:larger"><?php
-printf('<b>%d cable%s found.</b>',$num_cables_no_limit,$num_cables_no_limit > 1 ? 's' : '');
-?></span>&nbsp;&nbsp;Show <select id="classification-filters" style="font:inherit"><option value="7" selected="selected">All classifications<option value="4" class="cls">Secret<option value="6" class="clcs">Secret&thinsp;+&thinsp;confidential<option value="2" class="clc">Confidential<option value="3" class="cluc">Confidential&thinsp;+&thinsp;unclassified<option value="1" class="clu">Unclassified</select> <i>and</i> <select id="origin-filters" style="font:inherit"><option value="" selected="selected">All origins</select></p>
+<p><span style="font-size:larger">
+<b><?php echo number_format($num_cables_no_limit); ?> cable<?php if ( $num_cables_no_limit > 1 ) { echo 's'; } ?> found.</b>
+</span>&nbsp;&nbsp;Show <select id="classification-filters" style="font:inherit"><option value="7" selected="selected">All classifications<option value="4" class="cls">Secret<option value="6" class="clcs">Secret&thinsp;+&thinsp;confidential<option value="2" class="clc">Confidential<option value="3" class="cluc">Confidential&thinsp;+&thinsp;unclassified<option value="1" class="clu">Unclassified</select> from <select id="origin-filters" style="font:inherit"><option value="" selected="selected">All origins</select></p>
 <?php if ( !$sort && $prepdata['by_cable_date']['quarter_max'] > 0 ) { ?>
 <p><table id="graph" cellpadding="0" cellspacing="0"><tr>
 <?php
@@ -196,7 +238,9 @@ for ( $year = $year_first; $year <= $year_last; $year++ ) {
 		}
 	for ( $iQuarter = 1; $iQuarter <= 4; $iQuarter++ ) {
 		$quartertag = sprintf('%d%02d', $year, $iQuarter);
-		$num_entries_per_quarter = isset($prepdata['by_cable_date']['quarters'][$quartertag]) ? $prepdata['by_cable_date']['quarters'][$quartertag] : 0;
+		$num_entries_per_quarter = isset($prepdata['by_cable_date']['quarters'][$quartertag])
+			? $prepdata['by_cable_date']['quarters'][$quartertag]
+			: 0;
 		$bar_height = ceil($num_entries_per_quarter * $max_height / $prepdata['by_cable_date']['quarter_max']);
 		echo '<td>';
 		if ($bar_height == 0) {
@@ -251,7 +295,7 @@ if ($num_cables_left) {
 	$num_cables_next = min($num_cables_left,100);
 ?>
 <tr id="get-next-cables">
-<td><td><td colspan="2" style="padding:8px"><span id="get-next-cables-num_after"><?php echo $num_cables_left; ?></span> more cables not shown: Get next
+<td><td><td colspan="2" style="padding:8px"><span id="get-next-cables-num_after"><?php echo number_format($num_cables_left); ?></span> more cables not shown: Get next
 <button id="get-next-cables-button" type="button"><?php echo $num_cables_next; ?></button>
 <?php if ( $num_cables_left > 100 ) { ?>
 <button id="get-next500-cables-button" type="button"><?php echo min(500,$num_cables_left); ?></button>
@@ -263,16 +307,16 @@ cables
 <script type="text/javascript">
 <!--
 var CablegateGetNextInfo={
-	'command':'get_cable_entries',
-	'raw_query':'<?php echo $raw_query; ?>',
-	'sort':<?php echo $sort; ?>,
-	'yt':<?php echo $yt; ?>,
-	'mt':<?php echo $mt; ?>,
-	'offset':100,
-	'limit':<?php echo $num_cables_next; ?>,
-	'num_total':<?php echo $prepdata['by_cable_date']['total']; ?>,
-	'num_before':<?php echo $prepdata['by_cable_date']['total']-$num_cables_no_limit; ?>,
-	'num_after':<?php echo $num_cables_left; ?>
+	'command': 'get_cable_entries',
+	'raw_query': '<?php echo $raw_query; ?>',
+	'sort': <?php echo $sort; ?>,
+	'yt': <?php echo $yt; ?>,
+	'mt': <?php echo $mt; ?>,
+	'offset': 100,
+	'limit': <?php echo $num_cables_next; ?>,
+	'num_total': <?php echo $num_cables_no_time_range; ?>,
+	'num_before': <?php echo $num_cables_no_time_range - $num_cables_no_limit; ?>,
+	'num_after': <?php echo $num_cables_left; ?>
 	};
 // -->
 </script>
