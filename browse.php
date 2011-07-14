@@ -67,7 +67,7 @@ div {margin:0;padding:0}
 </head>
 <body>
 <h1>Cablegate's cables: Browse by tags</h1>
-<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gorhill" data-text="Cablegate's cables #cablegate: Browse by tags" data-url="http://www.cablegatesearch.net/browse.php<?php
+<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="Cablegate's cables #cablegate: Browse by tags" data-url="http://www.cablegatesearch.net/browse.php<?php
 if ( count($stack_of_tags) > 0 ) {
 	echo '?tags=', htmlentities(urlencode($_REQUEST['tags']));
 	}
