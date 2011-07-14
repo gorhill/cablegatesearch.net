@@ -240,7 +240,15 @@
 			});
 		q.getParent('form').addEvent('submit', submitHandler);
 		q.addEvent('keyup', function(){
-			$('clear-q').setStyle('visibility',this.value?'visible':'hidden');
+			// rhill 2011-07-12: test also whether the current
+			// page content is result of a query, not just
+			// current content of input field
+			var qexpressions = $('qexpressions');
+			$('clear-q').setStyle('visibility',
+				this.value || (qexpressions && qexpressions.innerHTML)
+					? 'visible'
+					: 'hidden'
+				);
 			});
 		// to handle click on field reset button
 		var e = $('clear-q');
