@@ -72,6 +72,7 @@ li.release > ul > li.nc:before {content:"\3D\2009"}
 .c,li.release > ul > li > span {background:#ffe4aa}
 .u,li.release > ul > li > span.u {background:#aaffba}
 .s,li.release > ul > li > span.s {background:#ffaaaa}
+li.release > ul > li > span.noforn {background-image:url('noforn-mini.png');background-repeat:no-repeat;background-position:left 2px}
 .a {color:darkgreen}
 .m {color:blue}
 .r {color:red}
@@ -89,7 +90,7 @@ a.magnet {margin-left:3em;font-size:smaller;color:gray;cursor:pointer}
 </head>
 <body>
 <h1>Cablegate's cables: Publishing history for <?php echo $title_period; ?></h1>
-<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gorhill" data-url="http://www.cablegatesearch.net/history.php<?php
+<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-url="http://www.cablegatesearch.net/history.php<?php
 if ( $request_period != $now_period ) {
 	echo "?period={$request_period}";
 	}
@@ -169,7 +170,7 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 		$years_axis_last_year = min($years_axis_last_year,$year);
 		}
 ?>
-<p style="margin-top:0">All time: <span class="a"><?php echo $total_num_added; ?> published</span>, <span class="m"><?php echo $total_num_modified; ?> modified</span>, <span class="r"><?php echo $total_num_removed; ?> removed</span> of which <span class="nc"><?php echo $total_num_readded; ?> have been restored without modifications</span>.</p>
+<p style="margin-top:0.5em">All time: <span class="a"><?php echo number_format($total_num_added); ?> published</span>, <span class="m"><?php echo number_format($total_num_modified); ?> modified</span>, <span class="r"><?php echo number_format($total_num_removed); ?> removed</span> of which <span class="nc"><?php echo $total_num_readded; ?> have been restored without modifications</span>.</p>
 <table id="graph" cellspacing="0" cellpadding="0">
 <?php
 	$months_axis_html = '<tr>';
@@ -292,13 +293,14 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 		' class="u"',
 		'',
 		' class="s"',
-		' class="s"',
-		'',
+		' class="s noforn"',
+		' class="noforn"',
 		' class="u"'
 		);
-
-	echo '<p style="margin-left:3em;color:gray"><span class="u"></span>Unclassified&emsp;<span class="c"></span>Confidential&emsp;<span class="s"></span>Secret</p>';
-
+?>
+<p style="margin-left:3em;color:gray"><span class="u"></span>Unclassified&emsp;<span class="c"></span>Confidential&emsp;<span class="s"></span>Secret</p>
+<div style="margin:1em 0;border:0;border-top:1px dotted #aaa;width:100%;height:1px"></div>
+<?php
 	echo '<ul class="releases">';
 	$release_magnets = array();
 	$releases = array();
@@ -327,20 +329,38 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 		$occurrences = array_count_values($change_details);
 		$fragments = array();
 		if ( isset($occurrences[1]) && $occurrences[1] > 0 ) {
-			$fragments[] = "<span class=\"a\">{$occurrences[1]} added</span>";
+			$fragments[] = '<span class="a">'
+			             . number_format($occurrences[1])
+			             . ' added</span>';
 			}
 		if ( isset($occurrences[2]) && $occurrences[2] > 0 ) {
-			$fragments[] = "<span class=\"m\">{$occurrences[2]} modified</span>";
+			$fragments[] = '<span class="m">'
+			             . number_format($occurrences[2])
+			             . ' modified</span>';
 			}
 		if ( isset($occurrences[3]) && $occurrences[3] > 0 ) {
-			$fragments[] = "<span class=\"r\">{$occurrences[3]} removed</span>";
+			$fragments[] = '<span class="r">'
+			             . number_format($occurrences[3])
+			             . ' removed</span>';
 			}
-		printf('<li class="release">%s UTC: %s<br><a class="magnet" href="%s">Torrent magnet for cablegate-%s.7z: %s</a><ul>',
+		if ( !empty($release_magnets[$release_time]) ) {
+			$magnet_link = sprintf(
+				'<a class="magnet" href="%s">Torrent magnet for cablegate-%s.7z: %s</a>',
+				htmlentities($release_magnets[$release_time]),
+				date('YmjHi',$release_time),
+				htmlentities($release_magnets[$release_time])
+				);
+			}
+		else {
+			$magnet_link = sprintf(
+				'<a class="magnet" href="#">From crawl operation completed on %s UTC</a>',
+				date('Y-m-j H:i',$release_time)
+				);
+			}
+		printf('<li class="release">%s UTC: %s<br>%s<ul>',
 			date('l, j F Y H:i ',$release_time),
 			implode(', ',$fragments),
-			htmlentities($release_magnets[$release_time]),
-			date('YmjHi',$release_time),
-			htmlentities($release_magnets[$release_time])
+			$magnet_link
 			);
 		uksort($change_details, 'canonical_compare');
 		foreach ( $change_details as $canonical_id => &$change ) {
@@ -443,4 +463,3 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 // -----
 db_close_compressed_cache();
 }
-?>
