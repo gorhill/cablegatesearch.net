@@ -122,23 +122,29 @@ if (!CablegateObject) {
 
 	co.cableRequestHandler = function(response){
 		if (response.id===undefined || response.content===undefined) {return;}
-		var header=response.header;
-		var content=response.content;
-		var origin=response.origin;
-		var cabletime=response.cableTime || '';
-		var classification=response.classification;
+		var header = response.header,
+			content = response.content,
+			origin = response.origin,
+			cabletime = response.cableTime || '',
+			classification = response.classification;
 		// assemble html of cable preview
-		var expressions=co.qTerms?co.qTerms.split(' '):[];
-		var info=[];
-		info.push('<b>Reference id:</b>&nbsp;',response.canonicalId,'<br><b>Origin:</b>&nbsp;',origin,'<br><b>Time:</b>&nbsp;',cabletime,'<br><b>Classification:</b>&nbsp;',classification);
+		var expressions = co.qTerms ? co.qTerms.split(' ') : [],
+			info=[];
+		info.push('<b>Reference id:</b>&nbsp;', response.canonicalId, '<br><b>Origin:</b>&nbsp;', origin, '<br><b>Time:</b>&nbsp;', cabletime, '<br><b>Classification:</b>&nbsp;', classification);
 		if (expressions.length){
 			info.push('<br><b>Highlight:</b>&nbsp;','<','img',' src="go-previous.png" alt="Previous"','>&ensp;<','img',' src="go-next.png" alt="Next"','>');
 			}
-		var infoContainer=new Element('div',{'html':info.join('')});
-		var pheader=new Element('p',{'html':header,styles:{display:co.hideHeaders?'none':''}});
-		var pbody=new Element('p',{'html':content});
-		pbody.adopt(new Element('span',{'class':'toggleHeader',text:co.hideHeaders?'Show header':'Hide header',events:{'click':co.toggleCableHeader}}));
-		var cableContainer=new Element('div');
+		var infoContainer = new Element('div',{'html':info.join('')}),
+			pheader = new Element('p',{'html':header,styles:{display:co.hideHeaders?'none':''}}),
+			pbody = new Element('p',{'html':content});
+		pbody.adopt(new Element('span',{
+			'class': 'toggleHeader',
+			text: co.hideHeaders ? 'Show header' : 'Hide header',
+			events: {
+				'click':co.toggleCableHeader
+				}
+			}));
+		var cableContainer = new Element('div');
 		cableContainer.adopt(pheader,pbody);
 		var div=$('cableid-'+response.id).getElement('.cable-preview');
 		div.empty();
@@ -153,7 +159,7 @@ if (!CablegateObject) {
 
 	co.cableExpand = function(id){
 		var tr=$('cableid-'+String(id));
-		var td=tr.getElement('td:first-child + td + td');
+		var td=tr.getElement('td:nth-of-type(3)');
 		var div=td.getElement('.cable-preview');
 		if (!div){
 			div=new Element('div',{'class':'cable-preview'});
@@ -176,13 +182,12 @@ if (!CablegateObject) {
 	co.cableCollapse = function(id){
 		var tr=$('cableid-'+String(id));
 		tr.getElement('.cable-preview').setStyle('display','none');
-		var td=tr.getElement('td:first-child + td + td');
+		var td=tr.getElement('td:nth-of-type(3)');
 		td.addClass('expandable');
 		td.removeClass('collapsible');
 		};
 
 	co.cablePreviewToggle = function(ev){
-		if (ev.target && ev.target.retrieve('customHandler')!==true) {return;}
 		var tr=this.getParent('tr[id^="cableid-"]');
 		if (!tr) {return;}
 		var id=tr.id.substr(8);
@@ -192,7 +197,7 @@ if (!CablegateObject) {
 		else {
 			co.cableExpand(id);
 			}
-		ev.preventDefault();
+		//ev.preventDefault();
 		};
 
 	co.cablesGetNextRequestHandler = function(response){
@@ -378,17 +383,20 @@ if (!CablegateObject) {
 	co.initCableRow = function(tr){
 		var id=tr.id.substr(8);
 		// add cable preview container
-		var td2=tr.getElement('td:first-child + td + td');
+		var td2=tr.getElement('td:nth-of-type(3)');
 		if (td2){
 			td2.addClass('expandable');
-			td2.addEvent('click',co.cablePreviewToggle);
-			td2.store('customHandler',true);
-			var td2a=td2.getElement('a');
+			var td2el=td2.getElement('a');
 			if (this.qTermsEncoded) {
-				td2a.href+='&q='+this.qTermsEncoded;
+				td2el.href+='&q='+this.qTermsEncoded;
 				}
-			td2a.target='_blank';
+			td2el.target='_blank';
 			td2.grab(new Element('div',{'class':(co.cartContainsItem(id)?'cartToggler inCart':'cartToggler'),events:{click:co.cartAddRemoveOnclickHandler}}),'top');
+			// passthrough click events for expanded/collapsed icon
+			td2el=td2.getElement('span:nth-of-type(1)');
+			if (td2el) {
+				td2el.addEvent('click',co.cablePreviewToggle);
+				}
 			}
 		// convert class "since" items from absolute to relative time
 		tr.getElements('.since').each(function(e){co.toElapsedTime(e);});
@@ -428,11 +436,6 @@ if (!CablegateObject) {
 		e=$$('#get-next-cables button').each(function(e){
 			e.addEvent('click',co.cablesGetNextOnclickHandler);
 			});
-		// to toggle on/off field reset
-		e=$('q');
-		if (e){
-			e.addEvent('keyup',function(){$('clear-q').setStyle('visibility',this.value?'visible':'hidden');});
-			}
 		// initialize filter selectors
 		co.updateFilterStats();
 		// handle click on classification selector
