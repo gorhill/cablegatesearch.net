@@ -75,7 +75,7 @@ if (!$cart_is_empty ) {
 <body>
 <h1>Cablegate's cables: <?= $cart_type ?> cart</h1>
 <?php if ( !$cart_is_empty ) { ?>
-<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gorhill" data-text="Check these cables #cablegate" data-url="http://www.cablegatesearch.net/cart.php<?php echo "?cart=", urlencode($cart); ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span><!-- end twitter -->
+<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="Check these cables #cablegate" data-url="http://www.cablegatesearch.net/cart.php<?php echo "?cart=", urlencode($cart); ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span><!-- end twitter -->
 <?php } ?>
 <?php include('header.php'); ?>
 <div id="main">
@@ -103,10 +103,9 @@ $query = "
 		c.`canonical_id`,
 		c.`cable_time`,
 		c.`change_time`,
-		(c.`status` & 0x01) AS `removed`,
-		(c.`status` & 0x02) AS `new_or_updated`,
+		c.`status`,
 		cl.`classification`,
-		o.`origin`,
+		o.`origin`,o.`country_id`,
 		c.`subject`
 	FROM `cablegate_classifications` cl
 		INNER JOIN (`cablegate_origins` o
@@ -161,7 +160,8 @@ while ( $sqlrow = mysql_fetch_assoc($result) ) {
 	$cables[] = array(
 		'canonical_id' => cp1252_to_htmlentities($sqlrow['canonical_id']),
 		'subject' => cp1252_to_htmlentities(strtoupper($sqlrow['subject'])),
-		'url' => sprintf('http://213.251.145.96/cable/%d/%02d/%s.html',
+		'url' => sprintf('http://%s/cable/%d/%02d/%s.html',
+			$WIKILEAKS_HOST,
 			$date_details['year'],
 			$date_details['mon'],
 			cp1252_to_htmlentities($sqlrow['canonical_id'])
