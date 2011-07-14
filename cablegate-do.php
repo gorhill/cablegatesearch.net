@@ -25,6 +25,7 @@ switch ($command) {
 		break;
 
 	case 'get_cable_entries':
+		include_once("cablegate-search-functions.php");
 		header_cache(30);
 		$raw_query = isset($_REQUEST['raw_query']) ? utf8_to_cp1252($_REQUEST['raw_query']) : '';
 		$sort = isset($_REQUEST['sort']) && is_numeric($_REQUEST['sort']) ? max((int)min(floor((int)$_REQUEST['sort']),1),0) : 0;
@@ -91,6 +92,7 @@ switch ($command) {
 		$canonical_ids = isset($_REQUEST['canonicalIds']) ? utf8_to_cp1252($_REQUEST['canonicalIds']) : '';
 		$cache_id = "do_get-cable-subjects_" . md5($canonical_ids);
 		if ( !db_output_compressed_cache($cache_id) ) {
+			include_once('cablegate-cable-functions.php');
 			db_open_compressed_cache($cache_id);
 			// -----
 			echo json_encode(cp1252_to_utf8(get_cable_subjects($canonical_ids)));
@@ -99,28 +101,54 @@ switch ($command) {
 			}
 		break;
 
+	case 'cable_attach_media_item':
+		include_once('cablegate-media-functions.php');
+		$cable_id = isset($_REQUEST['cable_id']) && ctype_digit($_REQUEST['cable_id']) ? intval($_REQUEST['cable_id']) : 0;
+		$url = isset($_REQUEST['url']) ? trim(trim($_REQUEST['url']), '/') : '';
+		$contributor_key = isset($_COOKIE['cablegateContributorKey']) ? $_COOKIE['cablegateContributorKey'] : '';
+		echo json_encode(cable_attach_media_item($cable_id, $url, $contributor_key));
+		break;
+
+	case 'cable_detach_media_item':
+		include_once('cablegate-media-functions.php');
+		$cable_id = isset($_REQUEST['cable_id']) && ctype_digit($_REQUEST['cable_id']) ? intval($_REQUEST['cable_id']) : 0;
+		$url_id = isset($_REQUEST['url_id']) && ctype_digit($_REQUEST['url_id']) ? intval($_REQUEST['url_id']) : 0;
+		$contributor_key = isset($_COOKIE['cablegateContributorKey']) ? $_COOKIE['cablegateContributorKey'] : '';
+		echo json_encode(cable_detach_media_item($cable_id, $url_id, $contributor_key));
+		break;
+
+	case 'get_media_items_from_host':
+		header_cache(60);
+		include_once('cablegate-media-functions.php');
+		$media_host = isset($_REQUEST['media_host']) ? $_REQUEST['media_host'] : '';
+		$media_host_id = isset($_REQUEST['media_host_id']) && ctype_digit($_REQUEST['media_host_id']) ? intval($_REQUEST['media_host_id']) : 0;
+		echo json_encode(get_media_items_from_host($media_host, $media_host_id));
+		break;
+
+	case 'get_cables_from_media_item_id':
+		header_cache(60);
+		include_once('cablegate-media-functions.php');
+		$media_item_id = isset($_REQUEST['media_item_id']) && ctype_digit($_REQUEST['media_item_id']) ? intval($_REQUEST['media_item_id']) : 0;
+		echo json_encode(get_cables_from_media_item_id($media_item_id));
+		break;
+
+	case 'get_media_items_from_cable_id':
+		header_cache(60);
+		include_once('cablegate-media-functions.php');
+		$media_item_id = isset($_REQUEST['media_item_id']) && ctype_digit($_REQUEST['media_item_id']) ? intval($_REQUEST['media_item_id']) : 0;
+		$cable_id = isset($_REQUEST['cable_id']) && ctype_digit($_REQUEST['cable_id']) ? intval($_REQUEST['cable_id']) : 0;
+		echo json_encode(get_media_items_from_cable_id($media_item_id, $cable_id));
+		break;
+
+	case 'get_suggestions_from_canonical_id':
+		header_cache(60);
+		include_once('cablegate-cable-functions.php');
+		$canonical_id = isset($_REQUEST['canonical_id']) && ctype_alnum($_REQUEST['canonical_id']) ? $_REQUEST['canonical_id'] : '';
+		echo json_encode(get_suggestions_from_canonical_id($canonical_id));
+		break;
+
 	default:
 		exit('Invalid command');
 	}
 
 /*****************************************************************************/
-
-function get_cable_subjects($canonical_ids) {
-	$answer = array('subjects' => array());
-	$canonical_ids = explode(',', $canonical_ids);
-	sort($canonical_ids, SORT_REGULAR);
-	$sqlquery = "SELECT `canonical_id`,`subject` FROM `cablegate_cables` WHERE ";
-	$sqlquerywhere = array();
-	foreach ( $canonical_ids as $canonical_id ) {
-		$sqlqueryparts[] = sprintf("`canonical_id`='%s'", mysql_real_escape_string($canonical_id));
-		}
-	$sqlquery .= implode(' OR ', $sqlqueryparts);
-	if ( $sqlresult = mysql_query($sqlquery) ) {
-		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
-			$answer['subjects'][$sqlrow['canonical_id']] = $sqlrow['subject'];
-			}
-		}
-	return $answer;
-	}
-
-?>
