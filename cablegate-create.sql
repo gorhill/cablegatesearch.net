@@ -39,7 +39,22 @@ DROP TABLE IF EXISTS `cablegate_origins`;
 CREATE TABLE `cablegate_origins` (
   `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
   `origin` tinytext NOT NULL,
+  `country_id` tinyint(3) unsigned NOT NULL,
   PRIMARY KEY (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `cablegate_countries`
+--
+
+DROP TABLE IF EXISTS `cablegate_countries`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cablegate_countries` (
+  `country_id` tinyint(3) unsigned NOT NULL AUTO_INCREMENT,
+  `country` tinytext NOT NULL,
+  PRIMARY KEY (`country_id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -66,6 +81,20 @@ CREATE TABLE `cablegate_cables` (
   KEY `release_time` (`release_time`),
   KEY `change_time` (`change_time`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `cablegate_contributors`
+--
+
+DROP TABLE IF EXISTS `cablegate_contributors`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cablegate_contributors` (
+  `sha1` char(40) NOT NULL,
+  `who` tinytext NOT NULL,
+  PRIMARY KEY (`sha1`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -138,6 +167,7 @@ DROP TABLE IF EXISTS `cablegate_contents`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cablegate_contents` (
   `id` mediumint(8) unsigned NOT NULL,
+  `hash` varbinary(16) NOT NULL DEFAULT '\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0',
   `tokenized` blob NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -190,23 +220,43 @@ CREATE TABLE `cablegate_ucables` (
   `tags` text NOT NULL,
   PRIMARY KEY (`ucable_id`),
   KEY `cable_time` (`cable_time`),
-  KEY `origin_id` (`origin_id`)
+  KEY `origin_id` (`origin_id`),
+  KEY `cable_id` (`cable_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 PACK_KEYS=1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `cablegate_utagassoc`
+-- Table structure for table `cablegate_urls`
 --
 
-DROP TABLE IF EXISTS `cablegate_utagassoc`;
+DROP TABLE IF EXISTS `cablegate_urls`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `cablegate_utagassoc` (
-  `tag_id` smallint(4) unsigned NOT NULL,
-  `ucable_id` mediumint(8) unsigned NOT NULL,
-  KEY `tag_id` (`tag_id`),
-  KEY `ucable_id` (`ucable_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 PACK_KEYS=1;
+CREATE TABLE `cablegate_urls` (
+  `url_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
+  `httpcode` smallint(6) NOT NULL DEFAULT '0',
+  `url` varchar(255) NOT NULL,
+  `title` blob,
+  `content` mediumblob,
+  PRIMARY KEY (`url_id`),
+  UNIQUE KEY `url` (`url`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `cablegate_urlassoc`
+--
+
+DROP TABLE IF EXISTS `cablegate_urlassoc`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cablegate_urlassoc` (
+  `cable_id` mediumint(6) unsigned NOT NULL,
+  `url_id` smallint(5) unsigned NOT NULL,
+  `flags` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  KEY `cable_id` (`cable_id`),
+  KEY `url_id` (`url_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -218,4 +268,4 @@ CREATE TABLE `cablegate_utagassoc` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2011-05-11  8:13:12
+-- Dump completed on 2011-07-13 22:17:43
