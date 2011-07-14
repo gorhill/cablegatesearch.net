@@ -49,11 +49,12 @@ $title = sprintf('Unreleased cables from %s', htmlentities($origin));
 #cables tr:nth-of-type(even) {background:#f8f8f8}
 #cables tr:nth-of-type(odd) {background:#eee}
 #cables tr:hover {background:#FFFAE8}
-#cables th {text-align:left}
+#cables th {text-align:left;white-space:nowrap}
 #cables td,#cables th {padding:3px 0.5em 3px 2px;border:0;border-bottom:1px solid white;vertical-align:top}
 #cables td:first-child {width:8em;white-space:nowrap}
-#cables td:first-child + td {padding-left:1em;font-variant:small-caps;color:#666;font-size:11px}
-#cables td:first-child + td > a {margin-left:-1em;display:block;font-size:14px}
+#cables td:nth-of-type(2) {padding-left:1em;font-variant:small-caps;color:#666;font-size:11px}
+#cables td:nth-of-type(2) > a,#cables td:nth-of-type(2) > span {margin-left:-1em;display:block;font-size:14px}
+#cables td:nth-of-type(3) {text-align:right}
 </style>
 <title>Cablegate's cables: <?php echo $title; ?></title>
 <meta http-equiv="Content-Language" content="en">
@@ -71,39 +72,35 @@ $title = sprintf('Unreleased cables from %s', htmlentities($origin));
 <p style="margin-top:0;color:gray;font-size:smaller">This page lists all the cables for a specific location as per the content of <a href="http://www.guardian.co.uk/news/datablog/2010/nov/29/wikileaks-cables-data#data">this spreadsheet</a>, published by <em>The Guardian</em> (which contains only date, time, location, and tags). An attempt is made to programmatically match entries with already released cables. As of now, the matching is performed using the cable's location and date/time, which can lead to erroneous matching once in a while (ex.: when many entries of a particular location have the same exact date/time.) This page is an early implementation of suggestions from <a href="http://www.wlcentral.org/">WL Central.org</a>'s x7o.</p>
 <div style="font-size:14px">
 <?php
-// get origin tags
-$tags_translated_table = array();
-$tags_translation_table = array();
-$sqlquery = "
-	SELECT
-		CONCAT(t.`tag`,'{',t.`id`,'}') AS `tag_from`,
-		CONCAT(t.`definition`,' (',t.`tag`,')') AS `tag_to`
-	FROM
-		`cablegate_tags` t
-		INNER JOIN (
-			SELECT DISTINCT
-				uta.`tag_id`
-			FROM
-				`cablegate_utagassoc` uta
-				INNER JOIN
-				`cablegate_ucables` uc
-				ON uta.`ucable_id` = uc.`ucable_id`
-			WHERE
-				uc.`origin_id` = {$origin_id}
-			) tids
-		ON t.`id` = tids.`tag_id`
-	";
-// printf('<p>%s</p>', $sqlquery);
-if ( $sqlresult = mysql_query($sqlquery) ) {
-	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
-		$tags_translation_table[$sqlrow['tag_from']] = $sqlrow['tag_to'];
+
+/*****************************************************************************/
+
+function get_tag_translation_table() {
+	if ( $cache_content = cache_retrieve('uorigin_tag_translation_table') ) {
+		return unserialize($cache_content);
 		}
+	if ( $tags = get_all_tags() ) {
+		$tags_translation_table = array();
+		foreach ( $tags as $tag_id => &$tag_details ) {
+			$tags_translation_table["{$tag_details['tag']}{{$tag_id}}"] = "{$tag_details['def']} ({$tag_details['tag']})";
+			}
+		cache_store('uorigin_tag_translation_table', serialize($tags_translation_table));
+		return $tags_translation_table;
+		}
+	return false;
 	}
 
-// get cables for this origin
+/*****************************************************************************/
+
+// get tag translation table (key to efficiently expand tag definitions)
+$tags_translated_table = array();
+$tags_translation_table = get_tag_translation_table();
+
+// we will time-period-coalesce cables for the graph
 $num_cables_per_quarter = array();
 $num_released_cables_per_quarter = array();
 
+// get all cables for a given origin
 $sqlquery = "
 	SELECT
 		uc.`ucable_id`,
@@ -144,7 +141,8 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 		// generate subject line
 		$subject = $sqlrow['subject'];
 		if ( !empty($subject) ) {
-			$subject = sprintf('<a href="cable.php?id=%s">%s: %s</a>',
+			$subject = sprintf(
+				'<a href="cable.php?id=%s">%s: %s</a>',
 				$sqlrow['canonical_id'],
 				$sqlrow['canonical_id'],
 				$subject
@@ -179,7 +177,7 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 		// translate tags
 		// reuse already translated sequences of tags whenever possible
 		if ( !isset($tags_translated_table[$sqlrow['tags']]) ) {
-			$tags_to_translate = preg_split('/([-\\/a-zA-Z0-9]+\\{\\d+\\})/',$sqlrow['tags'],-1,PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
+			$tags_to_translate = preg_split('/([-\\/a-zA-Z0-9]+\\{\\d+\\})/',$sqlrow['tags'], -1, PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
 			$tags_translated = '';
 			foreach ( $tags_to_translate as $tag_to_translate ) {
 				if ( isset($tags_translation_table[$tag_to_translate]) ) {
@@ -194,12 +192,13 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 		else {
 			$tags_translated = htmlentities($tags_translated_table[$sqlrow['tags']]);
 			}
-		
-		printf('<tr><td%s>%s<td>%s%s',
+
+		printf('<tr><td%s>%s<td>%s%s<td>%d',
 			$anchor,
-			date('Y, M j',$sqlrow['cable_time']),
+			date('Y, M j', $sqlrow['cable_time']),
 			$subject,
-			$tags_translated
+			$tags_translated,
+			$sqlrow['ucable_id']
 			);
 		}
 	$table_html = ob_get_clean();
@@ -208,6 +207,7 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 function recursive_sum($a, $b) {
 	return $a + (is_array($b) ? array_reduce($b, 'recursive_sum') : $b);
 	}
+
 function recursive_max($a, $b) {
 	return max($a, (is_array($b) ? array_reduce($b, 'recursive_max') : $b));
 	}
@@ -217,11 +217,11 @@ $num_released_cables = array_reduce($num_released_cables_per_quarter, "recursive
 
 if ( $num_cables ) {
 ?>
-<p><?php echo htmlentities($origin); ?>: <?php
-printf('%d (%.1f%%) cable%s released out of %d',
+<p><a href="/search.php?q=<?php echo urlencode(sprintf('"%s"',htmlentities($origin))); ?>"><?php echo htmlentities($origin); ?></a>: <?php
+printf('%d cable%s (%.1f%%) published out of %d',
 	$num_released_cables,
-	$num_released_cables / $num_cables * 100,
 	$num_released_cables > 1 ? 's' : '',
+	$num_released_cables / $num_cables * 100,
 	$num_cables
 	);
 ?> cables.</p>
@@ -282,7 +282,7 @@ for ( $year = $year_first; $year <= $year_last; $year++ ) {
 			$anchor = "q{$quarterkey}";
 			}
 		if ( $bar_height - $released_bar_height ) {
-			printf('<a href="#%s" style="height:%dpx" title="%s %d: %d unreleased cable%s"></a>',
+			printf('<a href="#%s" style="height:%dpx" title="%s %d: %d unpublished cable%s"></a>',
 				$anchor,
 				$bar_height - $released_bar_height,
 				$quarter_labels[$quarter],
@@ -292,7 +292,7 @@ for ( $year = $year_first; $year <= $year_last; $year++ ) {
 				);
 			}
 		if ( $released_bar_height ) {
-			printf('<a class="r" href="#%s" style="height:%dpx" title="%s %d: %d released cable%s"></a>',
+			printf('<a class="r" href="#%s" style="height:%dpx" title="%s %d: %d published cable%s"></a>',
 				$anchor,
 				$released_bar_height,
 				$quarter_labels[$quarter],
@@ -326,7 +326,7 @@ echo '<tr>', implode('',$xaxis_label_html);
 </table>
 <p>Filter(s): <input id="filter" type="text" size="40"> <span id="num-filtered-out"></span><br><span style="font-size:10px;color:gray">Only cables which contains all keywords will be displayed. You can also prefix keyword(s) with dash ('-') to instead filter out cables containing that/these keywords.</span></p>
 <table id="cables" cellspacing="0" cellpadding="0">
-<tr><th>Cable date<th>Cable (if any) / tags
+<tr><th>Cable date<th>Cable (if any) / tags<th>Wikileaks id
 <?php echo $table_html; ?>
 </table>
 <?php
