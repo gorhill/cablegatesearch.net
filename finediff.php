@@ -353,6 +353,12 @@ class FineDiff {
 		FineDiff::characterDelimiters
 		);
 
+	public static $textStack = array(
+		".",
+		" \t.\n\r",
+		""
+		);
+
 	/**------------------------------------------------------------------------
 	*
 	* Private section
@@ -667,16 +673,38 @@ class FineDiff {
 		if ( $opcode === 'c' ) {
 			echo htmlentities(substr($from, $from_offset, $from_len));
 			}
-		else if ( $opcode === 'd' ) {
-			$deletion = substr($from, $from_offset, $from_len);
-			if ( strcspn($deletion, " \n\r") === 0 ) {
-				$deletion = str_replace(array("\n","\r"), array('\n','\r'), $deletion);
+		else {
+			$changed = substr($from, $from_offset, $from_len);
+			if ( $opcode === 'd' ) {
+				$tag = 'del';
+				$count = strcspn($changed, "\n\r\t");
+				if ( $count === 0 ) {
+					$changed = str_replace(
+						array("\n", "\r", "\t"),
+						array('\\n','\\r','\\t'),
+						$changed,
+						$count
+						);
+					}
 				}
-			echo '<del>', htmlentities($deletion), '</del>';
-			}
-		else /* if ( $opcode === 'i' ) */ {
- 			echo '<ins>', htmlentities(substr($from, $from_offset, $from_len)), '</ins>';
+			else /* if ( $opcode === 'i' ) */ {
+				$tag = 'ins';
+				}
+			// rhill 2011-07-13: leading blank characters in html fragment don't
+			// (always) show, force them to show by replacing them with a special
+			// space character
+			$html = htmlentities($changed);
+			$count = strspn($html, " \t");
+			if ( $count > 0 ) {
+				$html = str_replace(
+					array(' ',"\t"),
+					'&#x2005;',
+					$html,
+					$count
+					);
+				}
+ 			echo '<', $tag, '>', $html, '</', $tag, '>';
 			}
 		}
 	}
-?>
+
