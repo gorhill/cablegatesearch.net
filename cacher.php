@@ -10,11 +10,26 @@ $CACHER_MAXITEMS_HI = 3000;
 $CACHE_HANDLE = false;
 $CACHE_DIR = $_SERVER['DOCUMENT_ROOT'] . '/cache/';
 
-/**
+/*****************************************************************************/
 
- Cached output functions
+/*
+if ( file_exists("{$CACHE_DIR}db_maintenance") ) {
+	exit(
+	    "<html>"
+	  . "<head>"
+	  .   "<title>Database maintenance</title>"
+	  .   "</head>"
+	  . "<body>"
+	  .   "Database is being updated. Try again in a few minutes."
+	  .   "</body>"
+	  . "</html>"
+	  );
+	}
+*/
 
- */
+/*****************************************************************************/
+
+// Cached output functions
 
 function cache_normalize_id($cache_id) {
 	if ( strlen($cache_id) > 100 ) {
@@ -36,7 +51,10 @@ function cache_get_sentinel_time() {
 function cache_store($cache_id, $content) {
 	global $CACHE_DIR;
 	$cache_path = $CACHE_DIR . cache_normalize_id($cache_id);
-	return file_put_contents($cache_path, $content);
+	if ( $r = file_put_contents($cache_path, $content) ) {
+		@chmod($cache_path, 0666);
+		}
+	return $r;
 	}
 
 function cache_retrieve($cache_id) {
@@ -50,6 +68,12 @@ function cache_retrieve($cache_id) {
 		return false;
 		}
 	return file_get_contents($cache_path);
+	}
+
+function cache_delete($cache_id) {
+	global $CACHE_DIR;
+	$cache_path = cache_id_to_fullpath($cache_id);
+	@unlink($cache_path);
 	}
 
 function cache_id_to_fullpath($cache_id) {
@@ -85,6 +109,7 @@ function db_open_compressed_cache($cache_id) {
 	if ( db_referrer_is_a_bot() ) {
 		return;
 		}
+
 	$CACHE_HANDLE = $cache_id;
 	ob_start();
 	}
@@ -197,7 +222,7 @@ function db_output_compressed($gzip_content) {
 		$encoding = false;
 		}
 	if ( $encoding ) {
-		header('Content-encoding: '.$encoding);
+		header('Content-encoding: ' . $encoding);
 		echo $gzip_content;
 		}
 	else {
@@ -246,6 +271,7 @@ function db_referrer_is_a_bot() {
 		array('DigExt',15), // possibly an offline reading downloader -- rude!
 		array('discobot',0),
 		array('dotnetdotcom.org',0),
+		array('Ezooms',15),
 		array('Feedfetcher-Google',0),
 		array('Gaisbot',0),
 		array('Gigabot',0),
@@ -287,9 +313,12 @@ function db_referrer_is_a_bot() {
 		}
 	// check for known bots
 	foreach ( $db_cache_exclude as $exclude ) {
-		if ( stripos($agent,$exclude[0]) !== FALSE ) {
+		if ( stripos($agent, $exclude[0]) !== false ) {
 			// slow down bandwidth hoggers
-			if ( $exclude[1] ) {
+			if ( $exclude[1] < 0 ) {
+				exit(0);
+				}
+			if ( $exclude[1] > 0 ) {
 				sleep($exclude[1]);
 				}
 			return true;
@@ -297,4 +326,5 @@ function db_referrer_is_a_bot() {
 		}
 	return false;
 	}
-?>
+
+/*****************************************************************************/
