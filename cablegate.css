@@ -8,11 +8,11 @@ a:hover {color:#004;opacity:0.8}
 a[href^="http"] {padding:0 12px 0 0;background:url(external-link.png) center right no-repeat}	
 #quote {margin:0;border:1px solid #D3E1EE;border-style:dotted none none none;padding:3px 4px;font:10px sans-serif;color:#495056;background-color:#BBCCDD}
 #quote a {color:inherit}
-#navi {margin:0 0 2px 0;padding:4px 4px;background:#FFF5D5;color:#A68F45;font-size:11px}
-#navi a,#navi span {margin:0 0 0 0.5em;padding:3px 0.5em;color:inherit;white-space:nowrap}
+#navi {margin:0 0 2px 0;padding:4px 4px;background:#FFF5D5;color:#A68F45;font-size:11px;line-height:150%}
+#navi a,#navi span {margin:0;padding:2px;color:inherit;white-space:nowrap}
 #navi a:first-child,#navi span:first-child {margin-left:0;padding-left:0}
 #navi a:hover {background:#A68F45;color:#FFFAE8}
-#navi a[href^="http"] {padding:3px 0.5em;background-image:none} /* cancel external link style... */
+#navi a[href^="http"] {padding:2px;background-image:none} /* cancel external link style... */
 #navi span {font-weight:bold}
 #main {padding:2px}
 #intro {font-size:x-small;color:gray}
