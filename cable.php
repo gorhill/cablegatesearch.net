@@ -241,7 +241,8 @@ echo $cable_data['content'];
 ?></div><!-- end body --></div><!-- end cable content -->
 </div><!-- end cable -->
 <div id="disqus_section">
-	<p style="margin-top:0;font-size:smaller;color:#a66">User-supplied content reflect the views of their respective authors, and not necessarily the view of the owner and moderator(s) of this web site. Posts with embedded links will have to be approved by a moderator. Only links to web pages which contribute complementary information to specifics in the cable will be allowed.</p>
+	<p style="margin-top:0;font-size:smaller;color:#a66">User-supplied content reflect the views of their respective authors, and not necessarily the view of the owner and moderator(s) of this web site. Posts with embedded links will have to be approved by a moderator. Only links to external web pages which <i>appear</i> to contribute complementary information to specifics in the cable will be allowed. Links to external web pages should not be construed as a statement of support of the external web sites by the owner and/or moderator(s) of cablegatesearch.net.</p>
+	<button id="disqus_show_comments" style="margin:0 0 1em 0;border:1px solid gray;font-size:small">Show comments</button>
 	<div id="disqus_thread"></div>
 	<script type="text/javascript">
 		/* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
@@ -251,13 +252,21 @@ echo $cable_data['content'];
 		var disqus_title = '<?php echo str_replace("'", "\\'", "{$cable_data['origin']} ({$cable_data['country']}): {$canonical_id}"); ?>';
 		/* * * DON'T EDIT BELOW THIS LINE * * */
 		(function() {
-			var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-			dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
-			(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-		})();
+			var disqus_show_comments = function() {
+				$('disqus_show_comments').setStyle('display','none');
+				var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+				(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				};
+			if (/^#comment-\d+$/.test(window.location.hash)) {
+				disqus_show_comments();
+				}
+			else {
+				$('disqus_show_comments').addEvent('click', disqus_show_comments);
+				}
+			})();
 	</script>
 	<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-	<a href="http://disqus.com" class="dsq-brlink">Comments powered by <span class="logo-disqus">Disqus</span></a>
 	</div>
 <?php } ?>
 </div><!-- end main -->
