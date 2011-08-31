@@ -70,10 +70,10 @@ switch ($command) {
 				ON cta.`term_id` = ct.`term_id`
 				GROUP BY `term_id`
 				",
-				mysql_real_escape_string($startwith),
+				db_escape_string($startwith),
 				$limit
 				);
-			if ( $sqlresult = mysql_query($sqlquery) ) {
+			if ( $sqlresult = db_query($sqlquery) ) {
 				if ( mysql_num_rows($sqlresult) ) {
 					while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 						$answer['suggestions'][] = "{$sqlrow['term']} <span>({$sqlrow['numCables']})</span>";
@@ -85,6 +85,12 @@ switch ($command) {
 				}
 			}
 		echo json_encode(cp1252_to_utf8($answer));
+		break;
+
+	case 'get_cable_wl_url_from_canonical_id':
+		include_once('cablegate-cable-functions.php');
+		$canonical_id = isset($_REQUEST['canonical_id']) ? $_REQUEST['canonical_id'] : '';
+		echo json_encode(cp1252_to_utf8(get_cable_wl_url_from_canonical_id($canonical_id)));
 		break;
 
 	case 'get_cable_subjects':
@@ -142,9 +148,20 @@ switch ($command) {
 
 	case 'get_suggestions_from_canonical_id':
 		header_cache(60);
-		include_once('cablegate-cable-functions.php');
 		$canonical_id = isset($_REQUEST['canonical_id']) && ctype_alnum($_REQUEST['canonical_id']) ? $_REQUEST['canonical_id'] : '';
-		echo json_encode(get_suggestions_from_canonical_id($canonical_id));
+		$cache_id = "do_get-suggestions-from-canonical-id_" . $canonical_id;
+		if ( !db_output_compressed_cache($cache_id) ) {
+			include_once('cablegate-cable-functions.php');
+			db_open_compressed_cache($cache_id);
+			// -----
+			$answer = get_suggestions_from_canonical_id($canonical_id);
+			echo json_encode($answer);
+			if ( empty($answer['cables']) ) {
+				db_cancel_cache();
+				}
+			// -----
+			db_close_compressed_cache();
+			}
 		break;
 
 	default:
