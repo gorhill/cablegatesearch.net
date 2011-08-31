@@ -136,7 +136,8 @@ if (!CablegateObject) {
 			}
 		var infoContainer = new Element('div',{'html':info.join('')}),
 			pheader = new Element('p',{'html':header,styles:{display:co.hideHeaders?'none':''}}),
-			pbody = new Element('p',{'html':content});
+			pbody = new Element('p',{'html':content,'class':'cable-content'});
+		pbody.getElements('a[href^="cable.php"').each(function(atag){atag.target='_blank';});
 		pbody.adopt(new Element('span',{
 			'class': 'toggleHeader',
 			text: co.hideHeaders ? 'Show header' : 'Hide header',
@@ -244,6 +245,27 @@ if (!CablegateObject) {
 			onSuccess:co.cablesGetNextRequestHandler
 			};
 		var jsonRequest=new Request.JSON(options).get(CablegateGetNextInfo);
+		};
+
+	co.filterToAnchor = function() {
+		var iclassification = $('classification-filters').selectedIndex,
+			iorigin = $('origin-filters').selectedIndex;
+		var newHash = '';
+		if (iclassification || iorigin) {
+			newHash = '#';
+			if (iclassification) {
+				newHash += 'c' + String(iclassification);
+				}
+			if (iclassification && iorigin) {
+				newHash += '-';
+				}
+			if (iorigin) {
+				newHash += 'o' + String(iorigin);
+				}
+			}
+		if (newHash != location.hash) {
+			location.hash = newHash;
+			}
 		};
 
 	co.filterCableRow = function(tr) {
@@ -409,12 +431,6 @@ if (!CablegateObject) {
 		// order is important
 		// convert absolute time to relative time
 		$$('#intro .since').each(function(e){co.toElapsedTime(e);});
-		// toggle search tips
-		e=$('search-tips-toggle');
-		if (e){
-			var fx=new Fx.Slide('search-tips').hide();
-			e.addEvent('click',function(){fx.toggle();});
-			}
 		// to pass on cable page for highlighting
 		e=$('qexpressions');
 		if (e && e.innerHTML !== ''){
@@ -438,13 +454,24 @@ if (!CablegateObject) {
 			});
 		// initialize filter selectors
 		co.updateFilterStats();
+		var iclassification = 0,
+			iorigin = 0,
+			ss;
 		// handle click on classification selector
 		e = $('classification-filters');
 		if (e) {
 			e.addEvent('change', function(){
 				co.classificationFilter = parseInt(this.value,10);
 				co.filterCableRows();
+				co.filterToAnchor();
 				});
+			// initialize filter as per anchor
+			ss = location.hash.match(/c(\d+)/);
+			if (ss && ss[1]) {
+				iclassification = parseInt(ss[1],10);
+				e.selectedIndex = iclassification;
+				co.classificationFilter = parseInt(e.options[iclassification].value,10);
+				}
 			}
 		// handle click on origin selector
 		e = $('origin-filters');
@@ -452,7 +479,18 @@ if (!CablegateObject) {
 			e.addEvent('change', function(){
 				co.originFilter = this.value;
 				co.filterCableRows();
+				co.filterToAnchor();
 				});
+			// initialize filter as per anchor
+			ss = location.hash.match(/o(\d+)/);
+			if (ss && ss[1]) {
+				iorigin = parseInt(ss[1],10);
+				e.selectedIndex = iorigin;
+				co.originFilter = e.options[iorigin].value;
+				}
+			}
+		if (iclassification || iorigin) {
+			co.filterCableRows();
 			}
 		};
 
