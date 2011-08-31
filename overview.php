@@ -40,7 +40,7 @@ db_open_compressed_cache($cache_id);
 <?php
 $countries = array();
 $sqlquery = "SELECT * FROM `cablegate_countries`";
-if ( $sqlresult = mysql_query($sqlquery) ) {
+if ( $sqlresult = db_query($sqlquery) ) {
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$countries[intval($sqlrow['country_id'])] = $sqlrow['country'];
 		}
@@ -80,7 +80,7 @@ $sqlquery = "
 $country_stats = array();
 $total_num_published_cables = $total_num_cables = 0;
 
-if ( $sqlresult = mysql_query($sqlquery) ) {
+if ( $sqlresult = db_query($sqlquery) ) {
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$num_published_cables = intval($sqlrow['num_published_cables']);
 		$num_cables = intval($sqlrow['num_cables']);
@@ -222,7 +222,7 @@ foreach ( $country_stats as $country_id => $country_details ) {
 			$percent_str = '< 1%';
 			}
 		else {
-			$percent_str = sprintf(abs($percent-round($percent)) < 0.1 ? '%.0f%%' : '%.1f%%', $percent);
+			$percent_str = sprintf(abs($percent-floor($percent)) < 0.1 ? '%.0f%%' : '%.1f%%', $percent);
 			}
 		printf('<li>%s<a href="uorigin.php?oid=%s">%s</a>: <span style="color:%s">%s</span>',
 			$origin_prefix,
