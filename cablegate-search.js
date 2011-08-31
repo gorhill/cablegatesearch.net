@@ -229,6 +229,12 @@
 		};
 
 	var init = function(){
+		// toggle search tips
+		var e=$('search-tips-toggle');
+		if (e){
+			var fx=new Fx.Slide('search-tips').hide();
+			e.addEvent('click',function(){fx.toggle();});
+			}
 		var q = $('q');
 		q.setAttribute('autocomplete','off');
 		q.addEvents({
@@ -251,7 +257,7 @@
 				);
 			});
 		// to handle click on field reset button
-		var e = $('clear-q');
+		e = $('clear-q');
 		e.addEvent('click',function(){
 			if (!/q=[^&]/.test(window.location.href)){
 				this.setStyle('visibility', 'hidden');
@@ -261,7 +267,7 @@
 				}
 			else {
 				var uri = 'search.php';
-				if ($('form').getElement('input[type="radio"][value="0"]').checked){
+				if ($('form').getElement('select[name="sort"] option[value="0"]').selected){
 					uri += '?sort=0';
 					}
 				window.location.href = uri;
