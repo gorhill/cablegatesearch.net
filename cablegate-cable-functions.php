@@ -1,5 +1,36 @@
 <?php
 include_once('dbconnect.php');
+include_once('globals.php');
+
+/*****************************************************************************/
+
+function get_cable_wl_url_from_canonical_id($canonical_id) {
+	global $WIKILEAKS_HOST;
+	$answer = array(
+		'canonical_id' => $canonical_id,
+		'wikileaks_url' => '',
+		);
+	$sqlquery = sprintf(
+		  "SELECT `cable_time` "
+		. "FROM `cablegate_cables` "
+		. "WHERE `canonical_id`='%s'"
+		,
+		db_escape_string($canonical_id)
+		);
+	if ( $sqlresult = db_query($sqlquery) ) {
+		if ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
+			$date_details = getdate(intval($sqlrow['cable_time']));
+			$answer['wikileaks_url'] = sprintf(
+				'http://%s/cable/%d/%02d/%s.html',
+				$WIKILEAKS_HOST,
+				$date_details['year'],
+				$date_details['mon'],
+				urlencode($canonical_id)
+				);
+			}
+		}
+	return $answer;
+	}
 
 /*****************************************************************************/
 
@@ -10,10 +41,10 @@ function get_cable_subjects($canonical_ids) {
 	$sqlquery = "SELECT `canonical_id`,`subject` FROM `cablegate_cables` WHERE ";
 	$sqlquerywhere = array();
 	foreach ( $canonical_ids as $canonical_id ) {
-		$sqlqueryparts[] = sprintf("`canonical_id`='%s'", mysql_real_escape_string($canonical_id));
+		$sqlqueryparts[] = sprintf("`canonical_id`='%s'", db_escape_string($canonical_id));
 		}
 	$sqlquery .= implode(' OR ', $sqlqueryparts);
-	if ( $sqlresult = mysql_query($sqlquery) ) {
+	if ( $sqlresult = db_query($sqlquery) ) {
 		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			$answer['subjects'][$sqlrow['canonical_id']] = $sqlrow['subject'];
 			}
@@ -21,21 +52,27 @@ function get_cable_subjects($canonical_ids) {
 	return $answer;
 	}
 
-/******************************************************************************
+/******************************************************************************/
 
- rhill 2011-06-28:
-   A plain "internal wikileaks id" can now be supplied, which will be
-   translated into a list of canonical ids as follow:
-   "wikileaks id" -> ucable_id above/below for which there is a
-   non-zero cable_id -> canonical_id
-
- */
+// rhill 2011-06-28:
+//   A plain "internal wikileaks id" can now be supplied, which will be
+//   translated into a list of canonical ids as follow:
+//   "wikileaks id" -> ucable_id above/below for which there is a
+//   non-zero cable_id -> canonical_id
 
 function get_suggestions_from_canonical_id($canonical_id) {
 	// if provided canonical id is only made of digit, assume this
     // is a wikileaks id.
-	if ( ctype_digit($canonical_id) ) {
+	if ( ctype_digit($canonical_id) && $canonical_id[0] != '0' ) {
 		return get_suggestions_from_wikileaks_id($canonical_id);
+		}
+
+	// if provided canonical id doesn't conform to typical pattern,
+	// try to extract a useful canonical id from string
+	if ( !preg_match('/^\\d\\d[A-Za-z][A-Za-z0-9]+?[A-Za-z]\\d+$/', $canonical_id) ) {
+		if ( preg_match('/\\d\\d[A-Za-z][A-Za-z0-9]+?[A-Za-z]\\d+/', $canonical_id, $matches) ) {
+			$canonical_id = $matches[0];
+			}
 		}
 
 	$num_cables_max = 11;
@@ -49,10 +86,10 @@ function get_suggestions_from_canonical_id($canonical_id) {
 		from `cablegate_cables`
 		where `canonical_id` = '%s'
 		limit 1",
-		mysql_real_escape_string($canonical_id)
+		db_escape_string($canonical_id)
 		);
 	// if we have a hit, use origin and cable time
-	if ( ($sqlresult = mysql_query($sqlquery)) && ($sqlrow = mysql_fetch_assoc($sqlresult)) ) {
+	if ( ($sqlresult = db_query($sqlquery)) && ($sqlrow = mysql_fetch_assoc($sqlresult)) ) {
 		$origin_id = intval($sqlrow['origin_id']);
 		$cable_time = intval($sqlrow['cable_time']);
 		// get preceding cables
@@ -64,7 +101,7 @@ function get_suggestions_from_canonical_id($canonical_id) {
 			limit %d",
 			$num_cables_max >> 1
 			);
-		if ( $sqlresult = mysql_query($sqlquery) ) {
+		if ( $sqlresult = db_query($sqlquery) ) {
 			while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 				array_unshift($answer['cables'], $sqlrow);
 				}
@@ -78,7 +115,7 @@ function get_suggestions_from_canonical_id($canonical_id) {
 			limit %d",
 			$num_cables_max - count($answer['cables'])
 			);
-		if ( $sqlresult = mysql_query($sqlquery) ) {
+		if ( $sqlresult = db_query($sqlquery) ) {
 			while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 				$answer['cables'][] = $sqlrow;
 				}
@@ -92,10 +129,10 @@ function get_suggestions_from_canonical_id($canonical_id) {
 			where `canonical_id` like '%s%%'
 			order by `canonical_id`
 			limit %d",
-			mysql_real_escape_string($canonical_id),
+			db_escape_string($canonical_id),
 			$num_cables_max
 			);
-		if ( $sqlresult = mysql_query($sqlquery) ) {
+		if ( $sqlresult = db_query($sqlquery) ) {
 			while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 				$answer['cables'][] = $sqlrow;
 				}
@@ -124,7 +161,7 @@ function get_suggestions_from_wikileaks_id($wikileaks_id) {
 		limit %d",
 		$num_cables_max >> 1
 		);
-	if ( $sqlresult = mysql_query($sqlquery) ) {
+	if ( $sqlresult = db_query($sqlquery) ) {
 		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			array_unshift($answer['cables'], $sqlrow);
 			}
@@ -142,7 +179,7 @@ function get_suggestions_from_wikileaks_id($wikileaks_id) {
 			) t
 		on o.`id` = t.`origin_id`
 		";
-	if ( $sqlresult = mysql_query($sqlquery) ) {
+	if ( $sqlresult = db_query($sqlquery) ) {
 		if ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			if ( $sqlrow['canonical_id'] ) {
 				$answer['canonical_id'] = $sqlrow['canonical_id'];
@@ -172,7 +209,7 @@ function get_suggestions_from_wikileaks_id($wikileaks_id) {
 		limit %d",
 		$num_cables_max - count($answer['cables'])
 		);
-	if ( $sqlresult = mysql_query($sqlquery) ) {
+	if ( $sqlresult = db_query($sqlquery) ) {
 		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			if ( intval($sqlrow['ucable_id']) == $wikileaks_id ) {
 				$answer['canonical_id'] = $sqlrow['canonical_id'];
