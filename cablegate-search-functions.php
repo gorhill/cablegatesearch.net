@@ -134,15 +134,15 @@ class Cablegate_Indexer {
 
 	// instances' public area
 
-	public function __construct($incremental = true) {
-		$this->incremental = $incremental;
+	public function __construct($starttime = PHP_INT_MAX) {
+		$this->incremental = $starttime !== 0;
 
 		// collect details about all existing terms
 		$this->term_id_generator = 1;
 		$this->in_db_term_id_to_term_map = array();
 		printf("\nCablegate_Indexer::__construct(): Fetching list of terms...");
 		$sqlquery = "SELECT `id`,`term` FROM `cablegate_terms`";
-		$sqlresult = mysql_query($sqlquery);
+		$sqlresult = db_query($sqlquery);
 		assert($sqlresult);
 		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			$term_id = intval($sqlrow['id']);
@@ -161,15 +161,25 @@ class Cablegate_Indexer {
 		$this->cable_ids = array();
 		$this->in_db_cable_id_to_tokenized_content_hash_map = array();
 		printf("\nCablegate_Indexer::__construct(): Fetching list of cables ids...");
+		// if a time value is provided, use it against `change_time` to
+		// determine which cables need reindexing, otherwise only reindex cables
+		// which are not indexed at all
 		$sqlquery = "SELECT c.`id` FROM `cablegate_cables` c ";
-		if ( $incremental ) {
-			$sqlquery = $sqlquery
-				      . "LEFT JOIN `cablegate_contents` co "
-				      . "ON c.`id` = co.`id` "
-				      . "WHERE co.`id` IS NULL"
-				      ;
+		if ( $starttime !== 0 ) {
+			if ( $starttime !== PHP_INT_MAX ) {
+				$sqlquery = $sqlquery
+						  . "WHERE c.`change_time` >= {$starttime}"
+						  ;
+				}
+			else {
+				$sqlquery = $sqlquery
+						  . "LEFT JOIN `cablegate_contents` co "
+						  . "ON c.`id` = co.`id` "
+						  . "WHERE co.`id` IS NULL"
+						  ;
+				}
 			}
-		$sqlresult = mysql_query($sqlquery);
+		$sqlresult = db_query($sqlquery);
 		assert($sqlresult);
 		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			$cable_id = intval($sqlrow['id']);
@@ -179,16 +189,18 @@ class Cablegate_Indexer {
 		printf("\nCablegate_Indexer::__construct(): %d cables ids fetched.", count($this->cable_ids));
 
 		// collect hashes of tokenized content of cables to process
-		$min_cable_id = min($this->cable_ids);
-		$max_cable_id = max($this->cable_ids);
-		$sqlquery = "SELECT `id`,`hash` "
-		          . "FROM `cablegate_contents` "
-		          . "WHERE `id` >= {$min_cable_id} AND `id` <={$max_cable_id}";
-		if ( $sqlresult = mysql_query($sqlquery) ) {
-			while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
-				$cable_id = intval($sqlrow['id']);
-				if ( isset($this->cable_ids[$cable_id]) ) {
-					$this->in_db_cable_id_to_tokenized_content_hash_map[$cable_id] = $sqlrow['hash'];
+		if ( count($this->cable_ids) ) {
+			$min_cable_id = min($this->cable_ids);
+			$max_cable_id = max($this->cable_ids);
+			$sqlquery = "SELECT `id`,`hash` "
+				      . "FROM `cablegate_contents` "
+				      . "WHERE `id` >= {$min_cable_id} AND `id` <={$max_cable_id}";
+			if ( $sqlresult = db_query($sqlquery) ) {
+				while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
+					$cable_id = intval($sqlrow['id']);
+					if ( isset($this->cable_ids[$cable_id]) ) {
+						$this->in_db_cable_id_to_tokenized_content_hash_map[$cable_id] = $sqlrow['hash'];
+						}
 					}
 				}
 			}
@@ -308,7 +320,7 @@ class Cablegate_Indexer {
 			. "WHERE "
 			.     "c.`id` = {$cable_id}"
 			;
-		$sqlresult = mysql_query($sqlquery);
+		$sqlresult = db_query($sqlquery);
 		assert($sqlresult);
 		if ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			$cable_details['canonical_id'] = $sqlrow['canonical_id'];
@@ -329,7 +341,7 @@ class Cablegate_Indexer {
 			. "ORDER BY "
 			.     "re.`release_time`"
 			;
-		$sqlresult = mysql_query($sqlquery);
+		$sqlresult = db_query($sqlquery);
 		assert($sqlresult);
 		if ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			list($header_opcodes, $body_opcodes) = explode($CABLE_CONTENT_SEPARATOR, $sqlrow['diff']);
@@ -424,7 +436,7 @@ class Cablegate_Indexer {
 		$per_statement_term_id_to_term_map_array = array_chunk($added_term_id_to_term_map, 100, true);
 		foreach ( $per_statement_term_id_to_term_map_array as $per_statement_term_id_to_term_map ) {
 			$sql = array();
-			$sql[] = "INSERT INTO `cablegate_terms` (`id`,`term`) VALUES";
+			$sql[] = "INSERT IGNORE INTO `cablegate_terms` (`id`,`term`) VALUES";
 			$per_statement_values = array();
 			$per_line_term_id_to_term_map_array = array_chunk($per_statement_term_id_to_term_map, 10, true);
 			foreach ( $per_line_term_id_to_term_map_array as $per_line_term_id_to_term_map ) {
@@ -523,7 +535,7 @@ class Cablegate_Indexer {
 			}
 
 		// optimize table order
-		fwrite($fhandle, "ALTER TABLE `cablegate_termassoc` ORDER BY `term_id`,`cable_id`;\n");
+		//fwrite($fhandle, "ALTER TABLE `cablegate_termassoc` ORDER BY `term_id`,`cable_id`;\n");
 		fwrite($fhandle, "ALTER TABLE `cablegate_contents` ORDER BY `id`;\n");
 
 		fwrite($fhandle, "ALTER TABLE `cablegate_terms` ENABLE KEYS;\n");
@@ -599,8 +611,8 @@ class Cablegate_Indexer {
 				$contents_data_fhandle,
 				sprintf(
 					"{$line_separator}{$cable_id}\t%s\t%s",
-					str_replace("\t", '\\t', mysql_real_escape_string($variable_length_tokenized_content_hash)),
-					str_replace("\t", '\\t', mysql_real_escape_string($variable_length_tokenized_content))
+					str_replace("\t", '\\t', db_escape_string($variable_length_tokenized_content_hash)),
+					str_replace("\t", '\\t', db_escape_string($variable_length_tokenized_content))
 					)
 				);
 
@@ -628,7 +640,7 @@ class Cablegate_Indexer {
 		fwrite($sql_fhandle, "CREATE TABLE `cablegate_termassoc_transient` LIKE `cablegate_termassoc`;\n");
 		fwrite($sql_fhandle, "ALTER TABLE `cablegate_termassoc_transient` DISABLE KEYS;\n");
 		fwrite($sql_fhandle, "LOAD DATA LOCAL INFILE './{$filename}_termassoc.data' INTO TABLE `cablegate_termassoc_transient`;\n");
-		fwrite($sql_fhandle, "ALTER TABLE `cablegate_termassoc_transient` ORDER BY `term_id`,`cable_id`;\n");
+		//fwrite($sql_fhandle, "ALTER TABLE `cablegate_termassoc_transient` ORDER BY `term_id`,`cable_id`;\n");
 		fwrite($sql_fhandle, "ALTER TABLE `cablegate_termassoc_transient` ENABLE KEYS;\n");
 
 		fwrite($sql_fhandle, "DROP TABLE `cablegate_terms`;\n");
@@ -735,78 +747,73 @@ function preprocess_query(
 	if ( $need_query ) {
 		if ( count($keywords) > 0 ) {
 			if ( count($keywords) > 1 ) {
-				$subsqlquery = sprintf(
-					  "SELECT DISTINCT `cable_id` "
-					. "FROM `cablegate_termassoc` ta "
-					. "INNER JOIN `cablegate_terms` t "
-					. "ON t.id = ta.term_id "
-					. "WHERE t.`term` LIKE '%s'"
-					,
-					translate_query_term_to_sqlpattern($keywords[0])
-					);
-				$outer_subsqlquery_template =
-					  "SELECT a.`cable_id`FROM ("
-					.     "SELECT DISTINCT `cable_id` "
-					.     "FROM `cablegate_termassoc` ta "
-					.     "INNER JOIN `cablegate_terms` t "
-					.     "ON t.id = ta.term_id "
-					.     "WHERE t.`term` LIKE '%s'"
-					.     ") a "
-					. "INNER JOIN (%s) b "
-					. "ON a.`cable_id` = b.`cable_id`";
-
-				for ( $i = 1; $i < count($keywords); $i++ ) {
-					$subsqlquery = sprintf(
-						$outer_subsqlquery_template,
-						translate_query_term_to_sqlpattern($keywords[$i]),
-						$subsqlquery
+				$union_subqueries = array();
+				foreach ( $keywords as $keyword ) {
+					$union_subqueries[] = sprintf(
+						  "(SELECT `cable_id` "
+						. "FROM `cablegate_termassoc` ta "
+						. "INNER JOIN `cablegate_terms` t "
+						. "ON t.id = ta.term_id "
+						. "WHERE t.`term` LIKE '%s' "
+						. "GROUP BY `cable_id`)"
+						,
+						translate_query_term_to_sqlpattern($keyword)
 						);
 					}
+				$subsqlquery = sprintf(
+					  "SELECT `cable_id` "
+					. "FROM (%s) a "
+					. "GROUP BY `cable_id` "
+					. "HAVING COUNT(`cable_id`) = %d"
+					,
+					implode(' UNION ALL ', $union_subqueries),
+					count($keywords)
+					);
 				// extra step for expressions which are exact sequences of keywords
 				if ( count($keywords) !== count($expressions) ) {
 					foreach ( $expressions as $expression ) {
 						if ( count($expression) > 1 ) {
+							// rhill 2011-08-04: one or more term in the expression might
+							// not exist, in which case, ensure returned result set is
+							// empty 
+							$tokenized_expression = tokenize_expression($expression);
 							$subsqlquery = sprintf(
 								  "SELECT a.`cable_id` "
 								. "FROM `cablegate_contents` co "
 								. "INNER JOIN (%s) a "
 								. "ON a.`cable_id`=co.`id` "
-								. "WHERE LOCATE(UNHEX('%s'),co.`tokenized`) != 0"
+								. "WHERE %s"
 								,
 								$subsqlquery,
-								bin2hex(tokenize_expression($expression))
+								$tokenized_expression
+									? sprintf("LOCATE(UNHEX('%s'),co.`tokenized`) != 0", bin2hex($tokenized_expression))
+									: '0'
 								);
 							}
 						}
 					}
 				// wrap up query
 				$subsqlquery = sprintf(
-					  "("
-					.     "`cablegate_cables` c "
-					.     "INNER JOIN ("
-					.         "SELECT `cable_id` "
-					.         "FROM (%s) a"
-					.         ") t "
-					.     "ON t.cable_id = c.`id`"
-					.     ")"
+					  "`cablegate_cables` c "
+					. "INNER JOIN (%s) a "
+					. "ON c.`id` = a.`cable_id`"
 					,
 					$subsqlquery
 					);
 				}
 			else {
 				$subsqlquery = sprintf(
-					  "("
-					.     "`cablegate_cables` c "
-					.     "INNER JOIN ("
-					.         "SELECT DISTINCT ta.`cable_id` "
-					.         "FROM `cablegate_termassoc` ta "
-					.         "INNER JOIN `cablegate_terms` t "
-					.         "ON t.id = ta.term_id "
-					.         "WHERE t.`term` "
-					.         "LIKE '%s'"
-					.         ") t "
-					.     "ON t.cable_id = c.`id`"
-					.     ")"
+					  "`cablegate_cables` c "
+					. "INNER JOIN ("
+					.     "SELECT `cable_id` "
+					.     "FROM `cablegate_termassoc` ta "
+					.     "INNER JOIN `cablegate_terms` t "
+					.     "ON t.id = ta.term_id "
+					.     "WHERE t.`term` "
+					.     "LIKE '%s' "
+					.     "GROUP BY ta.`cable_id`"
+					.     ") a "
+					. "ON c.`id` = a.`cable_id`"
 					,
 					translate_query_term_to_sqlpattern($keywords[0])
 					);
@@ -848,7 +855,7 @@ function preprocess_query(
 			.     "COUNT(DISTINCT c.`id`) AS `count` "
 			. "FROM {$preprocessed['subquery']} "
 			. "GROUP BY `year`,`month`";
-		$result = mysql_query($sqlquery);
+		$result = db_query($sqlquery);
 		if (!$result) {
 			exit(sprintf("Database error: %s\n", mysql_error()));
 			}
@@ -903,7 +910,7 @@ function preprocess_query(
 			.     "COUNT(DISTINCT c.`id`) AS `count` "
 			. "FROM {$preprocessed['subquery']} "
 			. "GROUP BY `year`,`month`";
-		$result = mysql_query($sqlquery);
+		$result = db_query($sqlquery);
 		if (!$result) {
 			exit("Database error\n");
 			}
@@ -990,7 +997,7 @@ function raw_query_to_normalized_expressions($raw_query) {
 			continue;
 			}
 		foreach ( $expression_matches[0] as $expression_match ) {
-			if (preg_match_all('/=?\\w+/',$expression_match,$keyword_matches)) {
+			if (preg_match_all('/=?\\w+/', $expression_match, $keyword_matches)) {
 				$expression = array();
 				foreach ( $keyword_matches[0] as $keyword_match ) {
 					$expression[] = preg_replace('/^(=?)0+(\\d+)$/','\\1\\2',$keyword_match); // remove leading zeros off numbers
@@ -999,12 +1006,16 @@ function raw_query_to_normalized_expressions($raw_query) {
 				if ( count($expression) > 1 ) {
 					$expression[0] = preg_replace('/^=/','',$expression[0]);
 					}
-				$expressions[] = $expression;
+				// rhill 2011-08-26: Emergency fix: Remove single character keyword unless exact match
+				if ( count($expression) > 1 || strlen($expression[0]) > 1 ) {
+					$expressions[] = $expression;
+					}
 				}
 			}
 		}
 
 	usort($expressions,'expression_sort');
+
 	return $expressions;
 	}
 
@@ -1031,39 +1042,24 @@ function parse_raw_query($raw_query) {
 
 function translate_query_term_to_sqlpattern($qterm) {
 	if ( $qterm[0] === '=' ) {
-		return mysql_real_escape_string(substr($qterm,1));
+		return db_escape_string(substr($qterm,1));
 		}
-	return mysql_real_escape_string($qterm) . '%';
+	return db_escape_string($qterm) . '%';
 	}
 
-$KEYWORD_TOKENS = array();
-function tokenize_keyword($keyword) {
-	global $KEYWORD_TOKENS;
-	if ( !isset($KEYWORD_TOKENS[$keyword]) ) {
-		$sqlquery = sprintf(
-			  "SELECT `id` "
-			. "FROM `cablegate_terms` "
-			. "WHERE `term` = '%s'"
-			,
-			mysql_real_escape_string($keyword)
-			);
-		if ( !($sqlresult = mysql_query($sqlquery)) ) {
-			exit("tokenize_keyword(): Fatal DB error\n");
-			}
-		if ( !($row = mysql_fetch_assoc($sqlresult)) ) {
-			exit(sprintf("tokenize_keyword(): Term '%s' not found in DB\n",$keyword));
-			}
-		$KEYWORD_TOKENS[$keyword] = pack('VX', intval($row['id']));
-		}
-	return $KEYWORD_TOKENS[$keyword];
-	}
+/*****************************************************************************/
+
+// Transform a series of terms into a string of tokens.
+// Returns false is at least of of the term in the series can't be
+// tokenized.
 
 function tokenize_expression($keywords) {
-	global $KEYWORD_TOKENS;
+	static $KEYWORD_TOKENS = array();
+
 	$sqlconditions = array();
 	foreach ( $keywords as $keyword ) {
 		if ( !isset($KEYWORD_TOKENS[$keyword]) ) {
-			$sqlconditions[] = sprintf("`term`='%s'", mysql_real_escape_string($keyword));
+			$sqlconditions[] = sprintf("`term`='%s'", db_escape_string($keyword));
 			}
 		}
 	if ( count($sqlconditions) ) {
@@ -1072,7 +1068,7 @@ function tokenize_expression($keywords) {
 		          . "WHERE "
 		          . implode(' OR ', $sqlconditions)
 		          ;
-		if ( !($sqlresult = mysql_query($sqlquery)) ) {
+		if ( !($sqlresult = db_query($sqlquery)) ) {
 			exit("tokenize_expression(): Fatal DB error\n");
 			}
 		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
@@ -1081,6 +1077,11 @@ function tokenize_expression($keywords) {
 		}
 	$tokenized_keywords = array();
 	foreach ( $keywords as $keyword ) {
+		// rhill 2011-08-04: if at least one keyword is not in the
+		// database, no point in looking further
+		if ( !isset($KEYWORD_TOKENS[$keyword]) ) {
+			return false;
+			}
 		$tokenized_keywords[] = $KEYWORD_TOKENS[$keyword];
 		}
 	return implode('', $tokenized_keywords);
@@ -1113,6 +1114,15 @@ function array_flatten($aa) {
 					}
 				$r[$s] = true;
 				}
+/* This version search losely on the last term, not sure if it's better..
+			$ilast = count($as) - 1;
+			foreach ( $as as $i => $s ) {
+				if ( $s[0] !== '=' && $i < $ilast ) {
+					$s = "={$s}";
+					}
+				$r[$s] = true;
+				}
+*/
 			}
 		}
 	uksort($r, 'array_flatten_cmp');
@@ -1136,6 +1146,7 @@ function array_flatten($aa) {
  *
  * @TODO  Avoid using an offset, as per:
  *        http://www.facebook.com/note.php?note_id=206034210932&id=102841356695
+ *        release_time <= x AND (release_time < x OR cable_time < y)
  */
 
 function get_cable_entries($raw_query, $sort, $yt, $mt, $offset, $limit) {
@@ -1148,17 +1159,11 @@ function get_cable_entries($raw_query, $sort, $yt, $mt, $offset, $limit) {
 		.     "c.`cable_time`,"
 		.     "c.`change_time`,"
 		.     "c.`status`,"
-		.     "cl.`classification`,"
-		.     "o.`origin`,"
-		.     "o.`country_id`,"
+		.     "c.`classification_id`,"
+		.     "c.`origin_id`,"
 		.     "c.`subject`"
-		. "FROM `cablegate_classifications` cl "
-		.     "INNER JOIN ("
-		.         "`cablegate_origins` o "
-		.         "INNER JOIN %s "
-		.         "ON o.`id` = c.`origin_id`"
-		.         ") "
-		.     "ON cl.`id` = c.`classification_id`"
+		. "FROM "
+		.     "%s "
 		,
 		$prepdata['subquery']
 		);
@@ -1169,7 +1174,7 @@ function get_cable_entries($raw_query, $sort, $yt, $mt, $offset, $limit) {
 	if ( !$sort ) {
 		$sqlquery .= sprintf(
 			  "WHERE "
-			.     "c.`%s_time` < UNIX_TIMESTAMP(DATE_ADD('%d-%02d-01',INTERVAL 1 MONTH))"
+			.     "c.`%s_time` < UNIX_TIMESTAMP(DATE_ADD('%d-%02d-01',INTERVAL 1 MONTH)) "
 			,
 			$column_names_lookup_by_sort[$sort],
 			$yt,
@@ -1187,11 +1192,11 @@ function get_cable_entries($raw_query, $sort, $yt, $mt, $offset, $limit) {
 		$offset,
 		$limit
 		);
-	$sqlresult = mysql_query($sqlquery);
+	$sqlresult = db_query($sqlquery);
 	if ( !$sqlresult ) {
 		exit(mysql_error());
 		}
-	return json_encode(cp1252_to_utf8(array('cables'=>cables2json($sqlresult))));
+	return json_encode(cp1252_to_utf8(array('cables'=>cables2json($sqlresult, $sort))));
 	}
 
 /*****************************************************************************/
