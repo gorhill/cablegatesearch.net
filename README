@@ -47,18 +47,6 @@ This website's code has been developed on:
 FILES
 -----
 
-- dbconnect.php:
-	To connect to the MySQL server, this is where
-	you fill in your database name, user id, password.
-
-- cacher.php:
-	Cache management, to save CPU cycles. Can be turned off. There
-	need to be a directory named "cache" with read/write permission
-	for all for the cacher to work properly. This was ported from
-	a previous project, naming is inconsistent, and there are issues
-	to resolve in the current project, particularly, when the database
-	is updated, the cache needs to be flushed manually currently.
-
 - browse.php:
 	Experimental, not completed, to browse the tags used
 	in the cables
@@ -66,40 +54,37 @@ FILES
 - cable.php:
 	Web page to display the content of a single cable
 
+- cacher.php:
+	Cache management, to save CPU cycles. Can be turned off. There
+	need to be a directory named "cache" with read/write permission
+	for all for the cacher to work properly. This was ported from
+	a previous project, naming is inconsistent.
+
 - cablegate-do.php:
 	XMLHttpRequests' entry point
 
 - cablegate-functions.php:
-	contains functions reused across multiple PHP files. It needs
+	Functions reused across multiple PHP files. It needs
 	cleanup.
 
-- cablegate-create.sql:
-	MySQL statements to create the structure of the
-	tables required to run the site
+- cablegate-cable-functions.php:
+	Functions related to cable-specific operations.
 
-- cablegate-create-and-populate.sql.7z:
-	MySQL statements to create the structures of the
-	tables required to run this site, and to fill them with the data
-	of the latest snapshot of released cables. Since this file is
-	way too large to host here (currently ~20MB), download it from:
-	http://www.cablegatesearch.net/cablegate-create-and-populate.sql.7z
+- cablegate-media-functions.php:
+	Functions related to media-specific operations.
 
-- cables.7z:
-	Contains all the unique versions of all the cables published by
-	Wikileaks so far. Because of its size (currently 40-50MB), this
-	7-Zip file is only available on the server, rather than being committed
-	here: http://www.cablegatesearch.net/cables.7z
-	The filename of each cable is composed as follow:
-	{release date as YYYMMDDHHmm}_{A 6-digit release id in DB}_{A 6-digit cable id in DB}_{canonical id}.html
-	If the database needs to be rebuilt from scratch, it will be
-	possible to keep the same id as before, which is especially important
-	for the cart.php feature.
-	Keep in mind a same cable could have been published more than
-	once. A cable file of size 0 means the cable had been removed from
-	the release.
+- cablegate-search-functions.php:
+	Functions related to search-specific operations.
 
 - cart.php:
 	A tool to collate and persist a specific set of cables
+
+- crowdsource-central.php:
+	Live feed of #wlfind Twitter hashtag, latest comments, etc.
+
+- dbconnect.php:
+	To connect to the MySQL server, this is where
+	you fill in your database name, user id, password.
 
 - extras.php:
 	Unsorted features are put in there
@@ -125,6 +110,15 @@ FILES
 
 - index.php:
 	Redirect to search.php
+
+- manning-logs-diff.php:
+	The alleged logs of alleged Cablegate leaker Bradley Manning
+
+- media.php:
+	A tree for all sources/articles for the published cables
+
+- overview.php:
+	An overview of the published/unpublished cables by country & embassy
 
 - release-notes.php:
 	Release notes, I'm not very good at keeping this up to
@@ -152,9 +146,11 @@ FILES
 	cablegate.js: more stuff (need to restructure these files)
 	cablegate-cart.js: cart management
 	cablegate-search.js: list of suggestions for search keyword
+	cablegate-uorigin.js: allow to filter published/unpublished cables for a specific embassy
 	mootools-more.js: Mootools More, for visual effects, date handling, etc.
 
-- Art files:
+
+- Art files (credits to http://openiconlibrary.sourceforge.net/):
 	background1.png
 	bookmark-add.png
 	bookmark-del.png
@@ -162,8 +158,31 @@ FILES
 	bookmark-info.png
 	bookmark.png
 	close.png
-	open.png
+	collapsed.png
+	edit-clear-2.png
+	edit-delete-5.png
+	expanded.png
+	external-link.png
 	go-next.png
 	go-previous.png
-	external-link.png
-	edit-clear-2.png
+	knewsletter.png
+	list-add-4.png
+	list-remove-4.png
+	noforn-mini.png
+	noforn.png
+	open.png
+	view-pim-news.png
+	/images/magnifier.png
+
+
+- cablegatesearch-create.sql:
+	MySQL statements to create the structure of the
+	tables required to run the site
+
+- cablegatesearch-create-and-populate-201108290338.sql.7z:
+	MySQL statements to create the structures of the
+	tables required to run this site, and to fill them with the data
+	of the latest snapshot of released cables. Since this file is
+	way too large to host here (currently ~660MB), download it using this
+	torrent magnet:
+	magnet:?xt=urn:btih:d16446ab759bf49643de9fc96fe402e4cb5e41b5&dn=cablegatesearch-create-and-populate-201108290338.sql.7z&tr=http%3A%2F%2Ftracker.openbittorrent.com%3A80
