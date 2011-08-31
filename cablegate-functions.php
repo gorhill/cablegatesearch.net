@@ -17,7 +17,7 @@ function get_all_classifications() {
 		if ( $cache_content = cache_retrieve('data_classifications') ) {
 			$classifications = unserialize($cache_content);
 			}
-		else if ( $sqlresult = mysql_query("select `id`,`classification` from `cablegate_classifications`") ) {
+		else if ( $sqlresult = db_query("select `id`,`classification` from `cablegate_classifications`") ) {
 			$classifications = array();
 			while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 				$classifications[intval($sqlrow['id'])] = $sqlrow['classification'];
@@ -28,6 +28,14 @@ function get_all_classifications() {
 	return $classifications;
 	}
 
+function get_classification_from_id($classification_id) {
+	$classifications = get_all_classifications();
+	if ( isset($classifications[$classification_id]) ) {
+		return $classifications[$classification_id];
+		}
+	return '';
+	}
+
 /*****************************************************************************/
 
 function get_all_origins() {
@@ -36,7 +44,7 @@ function get_all_origins() {
 		if ( $cache_content = cache_retrieve('data_origins') ) {
 			$origins = unserialize($cache_content);
 			}
-		else if ( $sqlresult = mysql_query("select `id`,`origin` from `cablegate_origins`") ) {
+		else if ( $sqlresult = db_query("select `id`,`origin` from `cablegate_origins`") ) {
 			$origins = array();
 			while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 				$origins[intval($sqlrow['id'])] = $sqlrow['origin'];
@@ -47,6 +55,41 @@ function get_all_origins() {
 	return $origins;
 	}
 
+function get_origin_from_id($origin_id) {
+	$origins = get_all_origins();
+	if ( isset($origins[$origin_id]) ) {
+		return $origins[$origin_id];
+		}
+	return '';
+	}
+
+/*****************************************************************************/
+
+function get_origin_to_country_map() {
+	static $origin_to_country_map = false;
+	if ( !$origin_to_country_map ) {
+		if ( $cache_content = cache_retrieve('data_origin_to_country_map') ) {
+			$origin_to_country_map = unserialize($cache_content);
+			}
+		else if ( $sqlresult = db_query("select `id`,`origin`,`country_id` from `cablegate_origins`") ) {
+			$origin_to_country_map = array();
+			while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
+				$origin_to_country_map[intval($sqlrow['id'])] = intval($sqlrow['country_id']);
+				}
+			cache_store('data_origin_to_country_map', serialize($origin_to_country_map));
+			}
+		}
+	return $origin_to_country_map;
+	}
+
+function get_countryid_from_originid($origin_id) {
+	$origin_to_country_map = get_origin_to_country_map();
+	if ( isset($origin_to_country_map[$origin_id]) ) {
+		return $origin_to_country_map[$origin_id];
+		}
+	return 0;
+	}
+
 /*****************************************************************************/
 
 function get_all_countries() {
@@ -55,7 +98,7 @@ function get_all_countries() {
 		if ( $cache_content = cache_retrieve('data_countries') ) {
 			$countries = unserialize($cache_content);
 			}
-		else if ( $sqlresult = mysql_query("select `country_id`,`country` from `cablegate_countries`") ) {
+		else if ( $sqlresult = db_query("select `country_id`,`country` from `cablegate_countries`") ) {
 			$countries = array();
 			while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 				$countries[intval($sqlrow['country_id'])] = $sqlrow['country'];
@@ -74,7 +117,7 @@ function get_all_tags() {
 		if ( $cache_content = cache_retrieve('data_tag_definitions') ) {
 			$tags = unserialize($cache_content);
 			}
-		else if ( $sqlresult = mysql_query("select `id`,`tag`,`definition` from `cablegate_tags`") ) {
+		else if ( $sqlresult = db_query("select `id`,`tag`,`definition` from `cablegate_tags`") ) {
 			$tags = array();
 			while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 				$tags[intval($sqlrow['id'])] = array(
@@ -91,7 +134,7 @@ function get_all_tags() {
 /*****************************************************************************/
 
 function utf8_to_cp1252($v) {
-	if ( is_string($v) )	{
+	if ( is_string($v) ) {
 		return iconv("UTF-8//TRANSLIT","CP1252",$v);
 		}
 	else if ( is_array($v) ) {
@@ -103,7 +146,7 @@ function utf8_to_cp1252($v) {
 	}
 
 function cp1252_to_utf8($v) {
-	if ( is_string($v) )	{
+	if ( is_string($v) ) {
 		return iconv("CP1252//TRANSLIT","UTF-8",$v);
 		}
 	else if ( is_array($v) ) {
@@ -115,8 +158,8 @@ function cp1252_to_utf8($v) {
 	}
 
 function cp1252_to_htmlentities($v) {
-	if ( is_string($v) )	{
-		return mb_convert_encoding($v, 'HTML-ENTITIES', 'Windows-1252');
+	if ( is_string($v) ) {
+		return mb_convert_encoding(htmlentities($v, ENT_QUOTES, 'cp1252'), 'HTML-ENTITIES', 'Windows-1252');
 		}
 	else if ( is_array($v) ) {
 		foreach ( $v as $k => $i ) {
@@ -151,15 +194,15 @@ function get_cable_content($cable_id, $cable_version = 0) {
 	// get cable details
 	$sqlquery = sprintf(
 		  "SELECT "
-		.     "c.`id`, "
-		.     "c.`cable_time`, "
-		.     "c.`release_time`, "
-		.     "c.`change_time`, "
-		.     "c.`canonical_id`, "
-		.     "c.`status`, "
-		.     "o.`origin`, "
-		.     "co.`country`, "
-		.     "cl.`classification`, "
+		.     "c.`id`,"
+		.     "c.`cable_time`,"
+		.     "c.`release_time`,"
+		.     "c.`change_time`,"
+		.     "c.`canonical_id`,"
+		.     "c.`status`,"
+		.     "o.`origin`,"
+		.     "co.`country`,"
+		.     "cl.`classification`,"
 		.     "c.`subject` "
 		. "FROM `cablegate_countries` co "
 		.     "INNER JOIN ("
@@ -176,11 +219,11 @@ function get_cable_content($cable_id, $cable_version = 0) {
 		.     "%s"
 		,
 		isset($canonical_id)
-			? sprintf("c.`canonical_id`='%s'", mysql_real_escape_string($canonical_id))
+			? sprintf("c.`canonical_id`='%s'", db_escape_string($canonical_id))
 			: "c.`id`={$cable_id}"
 		);
 
-	if ( !($sqlresult = mysql_query($sqlquery)) || !($sqlrow = mysql_fetch_assoc($sqlresult))) {
+	if ( !($sqlresult = db_query($sqlquery)) || !($sqlrow = mysql_fetch_assoc($sqlresult))) {
 		return false;
 		}
 
@@ -222,7 +265,7 @@ function get_cable_content($cable_id, $cable_version = 0) {
 	// get wikileaks id
 	$answer['wikileaks_id'] = 0;
 	$sqlquery = "select `ucable_id` from `cablegate_ucables` where `cable_id`={$answer['id']}";
-	if ( ($sqlresult = mysql_query($sqlquery)) && ($sqlrow = mysql_fetch_assoc($sqlresult)) ) {
+	if ( ($sqlresult = db_query($sqlquery)) && ($sqlrow = mysql_fetch_assoc($sqlresult)) ) {
 		$answer['wikileaks_id'] = intval($sqlrow['ucable_id']);
 		}
 
@@ -230,7 +273,7 @@ function get_cable_content($cable_id, $cable_version = 0) {
 	$showdiff = $cable_version !== 0;
 	$sensitive = $showdiff && ($answer['status'] & 0x08);
 	if ( $sensitive && !preg_match('/^(127\\.0\\.\\d+\\.\\d+)$/', $_SERVER["REMOTE_ADDR"]) ) {
-		$answer['content'] = '<span class="webmaster-comment">[Edit history of this cable is withheld because of its senstivity.]</span>';
+		$answer['content'] = '<span class="webmaster-comment">[Edit history of this cable is withheld because of its sensitivity.]</span>';
 		return $answer;
 		}
 
@@ -251,7 +294,7 @@ function get_cable_content($cable_id, $cable_version = 0) {
 		. "ORDER BY "
 		.     "re.`release_time` ASC"
 		;
-	$sqlresult = mysql_query($sqlquery);
+	$sqlresult = db_query($sqlquery);
 	if ( !$sqlresult ) {
 		return $answer;
 		}
@@ -292,10 +335,21 @@ function get_cable_content($cable_id, $cable_version = 0) {
 			}
 		}
 
-	$answer['header'] = $header;
-	$answer['content'] = $showdiff
-		? $content
-		: preg_replace_callback('/ \\[\\[(.+?)\\]\\]/','webmaster_comment_to_link', $content);
+	$answer['header'] = cp1252_to_htmlentities($header);
+
+	if ( !$showdiff ) {
+		$answer['content'] = cp1252_to_htmlentities($content);
+		$answer['content'] = preg_replace_callback('/ \\[\\[(.+?)\\]\\]/','webmaster_comment_to_link', $answer['content']);
+		$answer['content'] = preg_replace(
+			'/&para;(\\d{1,3})(\\.?)(\\D)/',
+			'<a id="para-'.$answer['id'] . '-\\1" href="cable.php?id=' . $answer['canonicalId'] . '#para-' . $answer['id'] . '-\\1">&para;\\1\\2\\3</a>',
+			$answer['content']
+			);
+		}
+	else {
+		$answer['content'] = $content;
+		}
+
 	//printf("%.3f ms<br>", (gettimeofday(true)-$start_time)*1000);
 
 	return $answer;
@@ -313,34 +367,40 @@ function webmaster_comment_to_link($matches) {
 
 // Convert cable data to an HTML row.
 
-function cable2row($sqlrow) {
+function cable2row($sqlrow, $sort = 1) {
+	$classification = get_classification_from_id($sqlrow['classification_id']);
 	$classification_class = stripos(
-		$sqlrow['classification'],'secret') !== false
+		$classification,'secret') !== false
 		? 'cls'
 		: (stripos(
-			$sqlrow['classification'],'confidential') !== false
+			$classification,'confidential') !== false
 			? 'clc'
 			: 'clu'
 			)
 		;
-	if ( stripos($sqlrow['classification'],'noforn') !== false ) {
+	if ( stripos($classification,'noforn') !== false ) {
 		$classification_class .= ' noforn';
 		}
 	$status = intval($sqlrow['status']);
+	$origin = get_origin_from_id($sqlrow['origin_id']);
+	$country_id = get_countryid_from_originid($sqlrow['origin_id']);
 	$countries = get_all_countries();
-	$country = isset($sqlrow['country_id'])
-		? sprintf(" (%s)", $countries[intval($sqlrow['country_id'])])
+	$country = $country_id
+		? sprintf(" (%s)", $countries[$country_id])
 		: ''
 		;
+	$sort_uri_component = '';
+	if ( !$sort ) {
+		$sort_uri_component = '&amp;sort=0';
+		}
 	return sprintf(
 		  '<td class="%s">'
-		. '<td%s>'
-		.   '%s'
+		. '<td%s>%s'
 		. '<td>'
 		.   '<span></span>'
 		.   '<a href="cable.php?id=%s"%s>%s</a>'
 		.   ' &mdash; '
-		.   '<a href="search.php?q=%s">%s%s</a>'
+		.   '<a href="search.php?q=%s%s">%s%s</a>'
 		. '<td class="since">'
 		.   '%s',
 		$classification_class,
@@ -349,8 +409,9 @@ function cable2row($sqlrow) {
 		htmlentities(urlencode($sqlrow['canonical_id'])),
 		$status & 0x01 ? ' class="removed"' : ($status & 2 ? ' class="added"' : ''),
 		cp1252_to_htmlentities($sqlrow['subject']),
-		cp1252_to_htmlentities(urlencode(str_replace(' ','-',$sqlrow['origin']))),
-		cp1252_to_htmlentities($sqlrow['origin']),
+		cp1252_to_htmlentities(urlencode(str_replace(' ','-',$origin))),
+		$sort_uri_component,
+		cp1252_to_htmlentities($origin),
 		cp1252_to_htmlentities($country),
 		date('c', $sqlrow['change_time'])
 		);
@@ -362,14 +423,14 @@ function cable2row($sqlrow) {
  *
  */
 
-function cables2rows($sqlresult) {
+function cables2rows($sqlresult, $sort = 1) {
 	$two_days_ago = time() - 60 * 60 * 24 * 2;
 	ob_start();
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		printf(
 			'<tr id="cableid-%d">%s',
 			$sqlrow['id'],
-			cable2row($sqlrow)
+			cable2row($sqlrow, $sort)
 			);
 		}
 	return ob_get_clean();
@@ -381,13 +442,13 @@ function cables2rows($sqlresult) {
  *
  */
 
-function cables2json($sqlresult) {
+function cables2json($sqlresult, $sort = 1) {
 	$entries = array();
 	$two_days_ago = time() - 60 * 60 * 24 * 2;
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$entry = array();
 		$entry['id'] = intval($sqlrow['id']);
-		$entry['html'] = cable2row($sqlrow);
+		$entry['html'] = cable2row($sqlrow, $sort);
 		$entries[] = $entry;
 		}
 	return $entries;
