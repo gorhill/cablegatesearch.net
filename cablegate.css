@@ -16,16 +16,19 @@ a[href^="http"] {padding:0 12px 0 0;background:url(external-link.png) center rig
 #navi span {font-weight:bold}
 #main {padding:2px}
 #intro {font-size:x-small;color:gray}
-#q {width:25em;z-index:-1}
+#q {width:24em;z-index:-1}
 @media screen and (max-width:640px) {
- #q {width:15em}
+ #q {width:14em}
  }
 .toggleHeader {padding:1px 3px;border:1px #9ab;border-style:none none dotted dotted;position:absolute;top:0;right:0;color:#9ab;background-color:transparent;font:smaller sans-serif;cursor:pointer}
 .toggleHeader:hover {color:#000;background-color:#fff}
 .struck {text-decoration:line-through;}
-.webmaster-comment {color:gray;font-style:italic;font-family:sans-serif;font-size:12px}
+.webmaster-comment {color:gray;font:italic 12px sans-serif}
+.cable-content a {color:#66F}
+.cable-content a[href^="search.php"] {padding-right:14px;background:transparent url('./images/magnifier.png') no-repeat right center}
 .hilite {padding:0 1px;font-weight:bold;background-color:#ff8}
 .hilite-with-focus {border:1px dotted red;padding:0;font-weight:bold;background-color:#ff8}
 .tip {border:1px solid gray;padding:4px 8px;font-size:12px;background-color:#fffff8;border-radius:6px;-moz-border-radius:6px}
 .tiptext {max-width:20em}
 .tipimage {}
+#disqus_thread a[href^="http"] {padding:0;background:none}
