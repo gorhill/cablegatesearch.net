@@ -12,4 +12,4 @@ function int2token($val) {
 	global $CART_BASE64_STR;
 	return substr($CART_BASE64_STR,($val>>12)&0x3F,1) . substr($CART_BASE64_STR,($val>>6)&0x3F,1) . substr($CART_BASE64_STR,$val&0x3F,1);
 	}
-?>
+
