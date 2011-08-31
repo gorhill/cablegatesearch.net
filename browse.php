@@ -93,7 +93,7 @@ if ( $nTags > 0 ) {
 	// first determine min,max for proper scaling
 	$sqlquery = "select max(a.num_cables) as `max_num_cables`,min(a.num_cables) as `min_num_cables` from ({$subquery}) a";
 	//printf("<p>{$sqlquery}</p>");
-	$sqlresult = mysql_query($sqlquery);
+	$sqlresult = db_query($sqlquery);
 	$sqlrow = mysql_fetch_assoc($sqlresult);
 	$max_num_cables = (int)$sqlrow['max_num_cables'];
 	$min_num_cables = (int)$sqlrow['min_num_cables'];
@@ -111,7 +111,7 @@ if ( $nTags > 0 ) {
 		where
 			`id` in ({$stringified_stack_of_tags})
 		";
-	$sqlresult = mysql_query($sqlquery);
+	$sqlresult = db_query($sqlquery);
 	echo mysql_error();
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$tag_details[$sqlrow['id']] = array($sqlrow['tag'], $sqlrow['definition']);
@@ -144,7 +144,7 @@ if ( $nTags > 0 ) {
 	// compute number of cables per tags
 	$sqlquery = "select t.`id`,t.`type`,t.`tag`,a.`num_cables`,if(char_length(t.`definition`)!=0,t.`definition`,t.`tag`) as `definition` from `cablegate_tags` t inner join ({$subquery}) a on a.`tag_id` = t.`id` order by `definition`";
 	//printf("<p>{$sqlquery}</p>");
-	$sqlresult = mysql_query($sqlquery);
+	$sqlresult = db_query($sqlquery);
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$num_cables = (int)$sqlrow['num_cables'];
 		$definition = preg_replace('/;.*$/','',$sqlrow['definition']);
@@ -181,7 +181,7 @@ else {
 		printf('<h3>%s</h3>', htmlentities($topic));
 		printf('<div class="topics">', htmlentities($topic));
 		$sqlquery = "select max(num_cables) as `max_num_cables`,min(num_cables) as `min_num_cables` from `cablegate_tags` t inner join (select `tag_id`,count(`cable_id`) as `num_cables` from `cablegate_tagassoc` group by `tag_id`) ta on ta.tag_id = t.id where t.type={$type}";
-		$sqlresult = mysql_query($sqlquery);
+		$sqlresult = db_query($sqlquery);
 		echo mysql_error();
 		$sqlrow = mysql_fetch_assoc($sqlresult);
 		$max_num_cables = (int)$sqlrow['max_num_cables'];
@@ -189,7 +189,7 @@ else {
 		$range = $max_num_cables - $min_num_cables;
 
 		$sqlquery = "select t.id,t.`type`,t.tag,ta.num_cables,if(char_length(t.definition)!=0,t.definition,t.tag) as `definition` from `cablegate_tags` t inner join (select `tag_id`,count(`cable_id`) as `num_cables` from `cablegate_tagassoc` group by `tag_id` order by `num_cables` desc) ta on ta.tag_id = t.id where t.type={$type} order by `definition`";
-		$sqlresult = mysql_query($sqlquery);
+		$sqlresult = db_query($sqlquery);
 		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			$num_cables = (int)$sqlrow['num_cables'];
 			$definition = preg_replace('/;.*$/','',$sqlrow['definition']);
