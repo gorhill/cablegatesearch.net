@@ -79,7 +79,7 @@ if (!$cart_is_empty ) {
 <?php } ?>
 <?php include('header.php'); ?>
 <div id="main">
-<p style="margin-top:0"><?php if (!$is_guest_cart) { ?>
+<p><?php if (!$is_guest_cart) { ?>
 This page shows the current content of your private cart.</p>
 <p>You can publish, share or keep for future reference the current content of your private cart with this permalink: <a id="cart-permalink" href="cart.php?cart=<?php echo $cart; ?>">cart.php?cart=<?php
 if ( strlen($cart) > 15 ) {
@@ -91,7 +91,7 @@ else {
 	}
 ?></a>.<br>Alternatively, you can use the Tweet button at the top-right corner of this page to share the content of this cart with others on Twitter.</p>
 <?php } else { ?>
-This is a public cart. You can't modify the content of a public cart.</p>
+This is a public cart. You can't modify the content of a public cart. To see the current content of your private cart, <a href="cart.php">click here</a>.</p>
 <?php } ?>
 <table id="cable-list" cellspacing="0" cellpadding="0">
 <tr><th><th>Cable date<th><a class="cartTogglerInfo" href="/cart.php"></a>Subject &mdash; Origin<th>Updated<br>... ago
@@ -104,16 +104,11 @@ $query = "
 		c.`cable_time`,
 		c.`change_time`,
 		c.`status`,
-		cl.`classification`,
-		o.`origin`,o.`country_id`,
+		c.`classification_id`,
+		c.`origin_id`,
 		c.`subject`
-	FROM `cablegate_classifications` cl
-		INNER JOIN (`cablegate_origins` o
-		INNER JOIN `cablegate_cables` c
-		ON o.`id` = c.`origin_id`)
-		ON cl.`id` = c.`classification_id`
-	WHERE
-		0
+	FROM `cablegate_cables` c
+	WHERE 0
 	";
 if (strlen($cart) > 0) {
 	$cart_tokens = str_split($cart,3);
@@ -128,7 +123,7 @@ $query .= "
 		c.`canonical_id`
 	";
 //printf("<p>%s</p>", $query);
-$result = mysql_query($query);
+$result = db_query($query);
 if (!$result) { exit(mysql_error()); }
 $num_cables = mysql_num_rows($result);
 echo cables2rows($result);
@@ -137,7 +132,7 @@ echo cables2rows($result);
 <tr><td colspan="4" style="color:gray">[Empty]
 <?php } ?>
 <?php if (!$is_guest_cart && $num_cables > 0) { ?>
-<tr><td colspan="4" style="text-align:right"><button>Remove all</button>
+<tr><td colspan="4" style="text-align:right"><button id="cart-remove-all">Remove all</button>
 <?php } ?>
 </table>
 <?php if ( $num_cables ) { ?>
