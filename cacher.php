@@ -5,8 +5,8 @@ include_once("dbconnect.php");
 
 $CACHER_EXCLUDE_IPS_REGEX = '';
 $CACHER_DISABLED = false;
-$CACHER_MAXITEMS_LO = 2900;
-$CACHER_MAXITEMS_HI = 3000;
+$CACHER_MAXITEMS_LO = 19000;
+$CACHER_MAXITEMS_HI = 20000;
 $CACHE_HANDLE = false;
 $CACHE_DIR = $_SERVER['DOCUMENT_ROOT'] . '/cache/';
 
@@ -45,6 +45,7 @@ function cache_get_sentinel_time() {
 		return $sentinel_time;
 		}
 	@touch($sentinel_path);
+	@chmod($sentinel_path, 0666);
 	return time();
 	}
 
@@ -179,7 +180,7 @@ function db_close_compressed_cache() {
 		}
 	}
 
-function db_get_compressed_cache($cache_id, $maxSeconds=0) {
+function db_get_compressed_cache($cache_id, $maxSeconds = 0) {
 	$fullpath = cache_id_to_fullpath($cache_id);
 	if ( !($gzip_content = @file_get_contents($fullpath)) ) {
 		return null;
