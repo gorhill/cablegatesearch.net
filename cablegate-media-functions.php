@@ -13,7 +13,7 @@ function cable_attach_media_item($cable_id, $url, $contributor_key) {
 	global $PROVISIONAL_URL_ID_MAX;
 
 	$answer = array('msg' => '');
-	$url_escaped = mysql_real_escape_string($url);
+	$url_escaped = db_escape_string($url);
 	$canonical_id = '';
 	$url_id = 0;
 	$must_undelete = 0;
@@ -24,9 +24,9 @@ function cable_attach_media_item($cable_id, $url, $contributor_key) {
 	if ( $contributor_key_sha ) {
 		$sqlquery = sprintf(
 			"select `sha1` from `cablegate_contributors` where `sha1`='{$contributor_key_sha}'",
-			mysql_real_escape_string($contributor_key)
+			db_escape_string($contributor_key)
 			);
-		$sqlresult = mysql_query($sqlquery);
+		$sqlresult = db_query($sqlquery);
 		$is_valid_contributor = $sqlresult && mysql_num_rows($sqlresult);
 		if ( !$is_valid_contributor ) {
 			$msg = 'Invalid contributor key. Request discarded.';
@@ -36,7 +36,7 @@ function cable_attach_media_item($cable_id, $url, $contributor_key) {
 	// see if specified cable exists
 	if ( !$msg ) {
 		$sqlquery = "select `canonical_id` from `cablegate_cables` where `id` = {$cable_id}";
-		$sqlresult = mysql_query($sqlquery);
+		$sqlresult = db_query($sqlquery);
 		if ( !$sqlresult || mysql_num_rows($sqlresult) !== 1 ) {
 			$msg = 'Invalid cable id. Request discarded.';
 			}
@@ -59,7 +59,7 @@ function cable_attach_media_item($cable_id, $url, $contributor_key) {
 			on u.`url_id` = ua.`url_id`
 			where ua.`cable_id` = {$cable_id} and u.`url` = '{$url_escaped}'
 			";
-		if ( $sqlresult = mysql_query($sqlquery) ) {
+		if ( $sqlresult = db_query($sqlquery) ) {
 			if ( mysql_num_rows($sqlresult) > 0 ) {
 				$url_id = intval(mysql_result($sqlresult, 0, 0));
 				$must_undelete = intval(mysql_result($sqlresult, 0, 1));
@@ -79,17 +79,17 @@ function cable_attach_media_item($cable_id, $url, $contributor_key) {
 	$pending = 1;
 	if ( $contributor_key_sha ) {
 		// see if url exists
-		if ( $sqlresult = mysql_query("select `url_id` from `cablegate_urls` where `url` = '{$url_escaped}'") ) {
+		if ( $sqlresult = db_query("select `url_id` from `cablegate_urls` where `url` = '{$url_escaped}'") ) {
 			if ( mysql_num_rows($sqlresult) > 0 ) {
 				$url_id = intval(mysql_result($sqlresult, 0));
 				}
 			}
 		// store url if it does not exist
 		if ( !$url_id ) {
-			mysql_query("insert ignore into `cablegate_urls` set `url` = '{$url_escaped}'");
+			db_query("insert ignore into `cablegate_urls` set `url` = '{$url_escaped}'");
 			}
 		// get url id
-		if ( $sqlresult = mysql_query("select `url_id` from `cablegate_urls` where `url` = '{$url_escaped}'") ) {
+		if ( $sqlresult = db_query("select `url_id` from `cablegate_urls` where `url` = '{$url_escaped}'") ) {
 			if ( mysql_num_rows($sqlresult) > 0 ) {
 				$url_id = intval(mysql_result($sqlresult, 0));
 				}
@@ -102,7 +102,7 @@ function cable_attach_media_item($cable_id, $url, $contributor_key) {
 			else {
 				$sqlquery = "insert into `cablegate_urlassoc` set `url_id`={$url_id},`cable_id`={$cable_id},`flags`=0x80;";
 				}
-			if ( $sqlresult = mysql_query($sqlquery) ) {
+			if ( $sqlresult = db_query($sqlquery) ) {
 				cache_delete("cable_{$canonical_id}");
 				cache_delete("cable_{$cable_id}");
 				cache_delete("media");
@@ -153,9 +153,9 @@ function cable_detach_media_item($cable_id, $url_id, $contributor_key) {
 	if ( $url_id < $PROVISIONAL_URL_ID_MIN ) {
 		$sqlquery = sprintf(
 			"select `sha1` from `cablegate_contributors` where `sha1`='{$contributor_key_sha}'",
-			mysql_real_escape_string($contributor_key)
+			db_escape_string($contributor_key)
 			);
-		$sqlresult = mysql_query($sqlquery);
+		$sqlresult = db_query($sqlquery);
 		$is_valid_contributor = $sqlresult && mysql_num_rows($sqlresult);
 		if ( !$contributor_key_sha || !$is_valid_contributor ) {
 			$msg = 'Invalid contributor key. Request discarded.';
@@ -164,7 +164,7 @@ function cable_detach_media_item($cable_id, $url_id, $contributor_key) {
 
 	// check cable id
 	if ( !$msg ) {
-		$sqlresult = mysql_query("SELECT `canonical_id` FROM `cablegate_cables` WHERE `id`={$cable_id}");
+		$sqlresult = db_query("SELECT `canonical_id` FROM `cablegate_cables` WHERE `id`={$cable_id}");
 		if ( !$sqlresult || !mysql_num_rows($sqlresult) ) {
 			$msg = 'Invalid cable id. Request discarded.';
 			}
@@ -175,7 +175,7 @@ function cable_detach_media_item($cable_id, $url_id, $contributor_key) {
 
 	// check url id
 	if ( !$msg && $url_id < $PROVISIONAL_URL_ID_MIN ) {
-		$sqlresult = mysql_query("SELECT `url_id` FROM `cablegate_urls` WHERE `url_id`={$url_id}");
+		$sqlresult = db_query("SELECT `url_id` FROM `cablegate_urls` WHERE `url_id`={$url_id}");
 		if ( !$sqlresult || !mysql_num_rows($sqlresult) ) {
 			$msg = 'Invalid URL. Request discarded.';
 			}
@@ -183,7 +183,7 @@ function cable_detach_media_item($cable_id, $url_id, $contributor_key) {
 
 	// check cable id-url id association
 	if ( !$msg && $url_id < $PROVISIONAL_URL_ID_MIN ) {
-		$sqlresult = mysql_query("SELECT `cable_id`,`url_id` FROM `cablegate_urlassoc` WHERE `cable_id`={$cable_id} AND `url_id`={$url_id}");
+		$sqlresult = db_query("SELECT `cable_id`,`url_id` FROM `cablegate_urlassoc` WHERE `cable_id`={$cable_id} AND `url_id`={$url_id}");
 		if ( !$sqlresult || !mysql_num_rows($sqlresult) ) {
 			$msg = 'Cable-URL association does not exists. Request discarded.';
 			}
@@ -211,7 +211,7 @@ function cable_detach_media_item($cable_id, $url_id, $contributor_key) {
 
 	// remove association
 	if ( $url_id < $PROVISIONAL_URL_ID_MIN ) {
-		$sqlresult = mysql_query("UPDATE `cablegate_urlassoc` SET `flags`=`flags` | 0x81 WHERE `cable_id`={$cable_id} AND `url_id`={$url_id}");
+		$sqlresult = db_query("UPDATE `cablegate_urlassoc` SET `flags`=`flags` | 0x81 WHERE `cable_id`={$cable_id} AND `url_id`={$url_id}");
 		if ( !$sqlresult || mysql_affected_rows() <= 0 ) {
 			return array(
 				'msg'=>'Request successful, removal awaiting review.',
@@ -242,11 +242,11 @@ function get_media_items_from_host($media_host, $media_host_id) {
 		from `cablegate_urls` u
 		inner join `cablegate_urlassoc` ua
 		on u.`url_id` = ua.`url_id`
-		where u.`url` rlike '^https?://(www[[:digit:]]*\\\\.)?%s(/.*)?$' and (ua.`flags` & 0x01) = 0
+		where u.`url` rlike '^https?://(www[[:digit:]]*\\\\.)?(wikileaks\\\\.)?%s(/.*)?$' and (ua.`flags` & 0x01) = 0
 		group by u.`url`
 		";
-	$sqlquery = sprintf($sqlquery, mysql_real_escape_string(preg_quote($media_host)));
-	if ( $sqlresult = mysql_query($sqlquery) ) {
+	$sqlquery = sprintf($sqlquery, db_escape_string(preg_quote($media_host)));
+	if ( $sqlresult = db_query($sqlquery) ) {
 		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			$answer['media_items'][] = array(
 				'id' => intval($sqlrow['url_id']),
@@ -273,7 +273,7 @@ function get_cables_from_media_item_id($media_item_id) {
 		where ua.`url_id` = {$media_item_id} and (ua.`flags` & 0x01) = 0
 		order by c.`cable_time`
 		";
-	if ( $sqlresult = mysql_query($sqlquery) ) {
+	if ( $sqlresult = db_query($sqlquery) ) {
 		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			$answer['cables'][] = array(
 				'id' => intval($sqlrow['cable_id']),
@@ -301,7 +301,7 @@ function get_media_items_from_cable_id($media_item_id, $cable_id) {
 		where ua.`cable_id` = {$cable_id} and ua.`url_id` != {$media_item_id}
 		order by u.`url`
 		";
-	if ( $sqlresult = mysql_query($sqlquery) ) {
+	if ( $sqlresult = db_query($sqlquery) ) {
 		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			$answer['media_items'][] = array(
 				'id' => intval($sqlrow['url_id']),
