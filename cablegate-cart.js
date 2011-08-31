@@ -37,6 +37,18 @@ if (!CablegateObject) {
 		this.cartUpdatePermalink(key);
 		};
 
+	co.cartSynchronizeItems = function() {
+		$$('.cartToggler').each(function(e){
+			var id = co.cartItemIdFromElement(e);
+			if (co.cartContainsItem(id)) {
+				e.addClass('inCart');
+				}
+			else {
+				e.removeClass('inCart');
+				}
+			});
+		};
+
 	co.cartAddItem = function(id) {
 		var base64 = this.cartItemIdToBase64(id),
 			key;
@@ -61,7 +73,8 @@ if (!CablegateObject) {
 
 	co.cartRemoveAll = function() {
 		this.cart = {};
-		this.saveCart();
+		this.cartSynchronizeItems();
+		this.cartSave();
 		this.cartUpdatePermalink();
 		};
 
@@ -136,16 +149,19 @@ if (!CablegateObject) {
 	window.addEvent('domready',function() {
 		co.cartUpdatePermalink();
 		$$('.cartToggler').each(function(e){
-			var id = co.cartItemIdFromElement(e);
-			if (co.cartContainsItem(id)) {
-				e.addClass('inCart');
-				}
 			e.addEvent('click', co.cartAddRemoveOnclickHandler);
 			});
+		co.cartSynchronizeItems();
 		// to auto-select whole field when clicked
-		var e=$('cart-permalink');
+		var e = $('cart-permalink');
 		if (e){
 			e.addEvent('click',function(){this.focus();this.select();});
+			}
+		e = $('cart-remove-all');
+		if (e){
+			e.addEvent('click',function(){
+				if (confirm('Remove all cables from your private cart?')) {co.cartRemoveAll();}
+				});
 			}
 		});
 }());
