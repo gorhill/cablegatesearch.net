@@ -67,18 +67,30 @@ body {background:white url('background1.png') repeat}
 #media-items div.media-item > img:hover {vertical-align:bottom;cursor:pointer;opacity:1}
 #add-media-item-button {opacity:0.25}
 #add-media-item-button:hover {opacity:1}
-#cable {margin:0;padding:0;max-width:60em}
+#cable {margin:0;padding:0;max-width:720px;display:inline-block}
 #cable > div:first-child {border:1px solid #e8e8e8;border-bottom:none;padding:0.5em;font-size:12px;background-color:#e8e8e8}
 #cable > div:first-child + div {border:1px solid #e8e8e8;border-top:none}
 #cable > div:first-child + div {white-space:pre-line;font-family:'Consolas',monospace}
 #cable > div:first-child + div > div {padding:0.5em}
 #cable > div:first-child + div > div:first-child {border-bottom:1px dotted #9ab;padding-bottom:1em;font-size:10.5px}
 #cable > div:first-child + div > div:first-child + div {padding-top:1em;position:relative}
-#cable-body {background:white}
+.cable-body {background:white}
 del {color:#a00;background:#fdd;text-decoration:none}
 ins {color:#080;background:#dfd;text-decoration:none}
 .cl-s {color:red}
 .cl-c {color:#e47800}
+#disqus_section {margin:0;padding:0;max-width:720px}
+#disqus_section #disqus_thread {margin:0;padding:0}
+@media only screen and (min-width:740px) and (max-width:1149px) {
+	#cable {min-width:720px}
+	#disqus_section {margin-top:1em}
+	}
+@media only screen and (min-width:1150px) {
+	#cable {display:inline-block;min-width:720px}
+	#disqus_section {display:inline-block;width:420px;vertical-align:top}
+	#disqus_section #dsq-content #dsq-global-toolbar {margin:0}
+	#goto-comments-prompt {display:none}
+	}
 </style>
 <?php include('mootools-core-1.3-loader.inc'); ?>
 <script src="mootools-more.js" type="text/javascript"></script>
@@ -88,15 +100,22 @@ ins {color:#080;background:#dfd;text-decoration:none}
 <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
 <meta name="keywords" content="cablegate, wikileaks, full, text, search, browse">
 <meta name="description" content="<?php echo $title, ': ', $description; ?>">
+<?php
+$canonical_url = 'http://www.cablegatesearch.net/cable.php?id=' . htmlentities(urlencode($canonical_id));
+if ( $cable_version ) {
+	$canonical_url .= '&amp;version=' . $cable_version;
+	}
+?><link rel="canonical" href="<?php echo $canonical_url; ?>">
 </head>
 <body>
 <h1><?php echo $title ?></h1>
-<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="<?php echo $title; ?>" data-url="http://www.cablegatesearch.net/cable.php?id=<?php
-echo htmlentities(urlencode($canonical_id));
-if ( $cable_version ) {
-	echo '&amp;version=', $cable_version;
-	}
-?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
+<span style="display:inline-block;position:absolute;top:4px;right:0"><g:plusone size="medium"></g:plusone><script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="<?php echo '#wlfind #', htmlentities($canonical_id); ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
 <?php include('header.php'); ?>
 <div id="main">
 <?php if ( !empty($canonical_id) ) { ?>
@@ -129,7 +148,7 @@ $sqlquery = "
 	ORDER BY
 		`change_time` ASC
 	";
-if ( $sqlresult = mysql_query($sqlquery) ) {
+if ( $sqlresult = db_query($sqlquery) ) {
 	$history_details = array(
 		array('color'=>'#000', 'prompt'=>''),
 		array('color'=>'darkgreen', 'prompt'=>'First published'),
@@ -166,57 +185,83 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 <tr><td>History<td><?php echo implode('<br>', $history); ?>
 <tr><td>Media&emsp;<img id="add-media-item-button" src="list-add-4.png" alt="Add media item" title="Add media item" style="vertical-align:top;cursor:pointer" width="14" height="14"><td><div id="media-items"><?php
 // Find media items for this cable
-$sqlquery = "
-	SELECT
-		u.`url_id`,
-		u.`url`
-	FROM
-		`cablegate_urls` u
-		INNER JOIN
-		`cablegate_urlassoc` ua
-		ON ua.`url_id` = u.`url_id`
-	WHERE
-		ua.`cable_id`={$cable_id} AND (ua.`flags` & 0x01) = 0
-	GROUP BY
-		u.`url_id`
-	";
-if ( $sqlresult = mysql_query($sqlquery) ) {
+$sqlquery =
+	  "SELECT "
+	.   "u.`url_id`,"
+	.   "UNCOMPRESS(u.`title`) as `title`,"
+	.   "u.`url` "
+	. "FROM "
+	.   "`cablegate_urls` u "
+	.     "INNER JOIN "
+	.     "`cablegate_urlassoc` ua "
+	.     "ON ua.`url_id` = u.`url_id` "
+	. "WHERE "
+	.   "ua.`cable_id`={$cable_id} AND (ua.`flags` & 0x01) = 0 "
+	. "GROUP BY "
+	.   "u.`url_id`"
+	;
+if ( $sqlresult = db_query($sqlquery) ) {
 	$urls = array();
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
-		$urls[intval($sqlrow['url_id'])] = $sqlrow['url'];
+		$urls[] = $sqlrow;
 		}
 	if ( count($urls) ) {
-		$delete_button = $is_root_contributor ? '<img src="edit-delete-5.png" alt="Remove media item" title="Remove media item" width="14" height="14" style="display:none">' : '';
-		foreach ( $urls as $url_id => $url ) {
+		foreach ( $urls as $url_details ) {
+			$title = empty($url_details['title'])
+				? mb_convert_encoding(urldecode($url_details['url']), 'HTML-ENTITIES', 'Windows-1252')
+				: $url_details['title']
+				;
 			printf(
-				'<div id="media-item-%d" class="media-item"><a href="%s">%s</a>%s</div>',
-				$url_id,
-				$url,
-				mb_convert_encoding(urldecode($url), 'HTML-ENTITIES', 'UTF-8'),
-				$delete_button
+				  '<div id="media-item-%s" class="media-item">'
+				. '<a href="%s">%s</a>'
+				. '<img src="edit-delete-5.png" alt="Remove media item" title="Remove media item" width="14" height="14" style="display:none">'
+				. '</div>'
+				,
+				$url_details['url_id'],
+				$url_details['url'],
+				$title
 				);
 			}
 		}
 	}
 ?></div>
 <div id="add-media-item-dialog" style="border:1px solid #eec;padding:0.5em;display:none;position:absolute;min-width:30em;max-width:50%;background:#ffe;z-index:1;-moz-box-shadow:3px 3px 3px #888;box-shadow:3px 3px 3px #888">
-	<span style="color:gray">(Experimental)</span> <label>URL to a media item <i>expressly quoting and/or mentioning</i> the present cable (mere mirror of a cable is not considered a useful &lsquo;media item&rsquo;): </label><br><input id="add-media-item-dialog-url" type="text" max-size="255" style="margin:0.25em 0 0 0;width:95%"><br>
+	<span style="color:gray">(Experimental)</span> <label>URL to a media item <i>expressly quoting and/or mentioning</i> the present cable (mere mirror of a cable is not considered a useful &lsquo;media item&rsquo;): </label><br><input id="add-media-item-dialog-url" type="text" maxlength="255" style="margin:0.25em 0 0 0;width:95%"><br>
 	<div id="add-media-item-dialog-message" style="margin:0.5em 0 0 1em;font-size:smaller"></div><br>
 	<button id="add-media-item-dialog-cancel">Close</button> <button id="add-media-item-dialog-ok">Add</button>
-	<div style="margin-top:2em;font-size:smaller"><label>Contributor key (optional): </label><input id="add-media-item-dialog-contributor-key" type="text" size="32" max-size="32" style="font-size:inherit">	<div style="color:gray">If no contributor key is supplied, submitted URLs will have to be vouched by the webmaster before appearing in the list. If an invalid contributor key is supplied, the submitted URL will be ignored. If a valid contributor key is supplied, the submitted URL will be immediately associated with the cable and visible to other visitors.<br>To obtain a valid contributor key, <a href="mailto:rhill@cablegatesearch.net?subject=cablegatesearch.net:%20Re.%20contributor key">email me</a>. (I welcome media representatives, authors, writers, etc.)</div></div>
+	<div style="margin-top:2em;font-size:smaller"><label>Contributor key (optional): </label><input id="add-media-item-dialog-contributor-key" type="text" size="32" maxlength="32" style="font-size:inherit">	<div style="color:gray">If no contributor key is supplied, submitted URLs will have to be vouched by the webmaster before appearing in the list. If an invalid contributor key is supplied, the submitted URL will be ignored. If a valid contributor key is supplied, the submitted URL will be immediately associated with the cable and visible to other visitors.<br>To obtain a valid contributor key, <a href="mailto:rhill@cablegatesearch.net?subject=cablegatesearch.net:%20Re.%20contributor key">email me</a>. (I welcome media representatives, authors, writers, etc.)</div></div>
 	</div>
+<tr id="goto-comments-prompt"><td>Comments<td>You can <a href="#disqus_thread">comment on this cable</a>.
 </table>
 </div><!-- end cable summary -->
-<div><!-- cable content --><div id="cable-header"><!-- header --><?php
+<div class="cable-content"><!-- cable content --><div id="cable-header"><!-- header --><?php
 echo $cable_data['header'];
-?></div><!-- end header --><div id="cable-body"><!-- body --><span class="toggleHeader">Hide header</span><?php
+?></div><!-- end header --><div class="cable-body"><!-- body --><span class="toggleHeader">Hide header</span><?php
 echo $cable_data['content'];
 ?></div><!-- end body --></div><!-- end cable content -->
 </div><!-- end cable -->
+<div id="disqus_section">
+	<p style="margin-top:0;font-size:smaller;color:#a66">User-supplied content reflect the views of their respective authors, and not necessarily the view of the owner and moderator(s) of this web site. Posts with embedded links will have to be approved by a moderator. Only links to web pages which contribute complementary information to specifics in the cable will be allowed.</p>
+	<div id="disqus_thread"></div>
+	<script type="text/javascript">
+		/* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+		var disqus_shortname = 'cablegate-full-text-search';
+		var disqus_identifier = '<?php echo $canonical_id; ?>';
+		var disqus_url = 'http://www.cablegatesearch.net/cable.php?id=<?php echo $canonical_id; ?>';
+		var disqus_title = '<?php echo str_replace("'", "\\'", "{$cable_data['origin']} ({$cable_data['country']}): {$canonical_id}"); ?>';
+		/* * * DON'T EDIT BELOW THIS LINE * * */
+		(function() {
+			var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+			dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+			(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+		})();
+	</script>
+	<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+	<a href="http://disqus.com" class="dsq-brlink">Comments powered by <span class="logo-disqus">Disqus</span></a>
+	</div>
 <?php } ?>
 </div><!-- end main -->
 <script type="text/javascript">
-<!-- 
 (function(){
 	var q = window.location.href.match(/q=([^&]+)/);
 	if ( !q || q.length < 2 ) { return; }
@@ -251,10 +296,8 @@ echo $cable_data['content'];
 		doHighlight('cable','hilite',new RegExp(expression,'ig'),2);
 		}
 })();
-// -->
 </script>
-<script>
-<!--
+<script type="text/javascript">
 (function () {
 	var thisCableId = <?php echo $cable_id; ?>,
 		thisCanonicalId = '<?php echo $canonical_id; ?>';
@@ -303,7 +346,7 @@ echo $cable_data['content'];
 		$('add-media-item-dialog-ok').disabled = true;
 		};
 	var stopRequest = function (msg) {
-		msg = msg || '<span style="color:red">An error occurred. Try again later.</span>';
+		msg = msg || '<span style="color:red">An error occurred. Try again later.<\/span>';
 		$('add-media-item-dialog-message').innerHTML = msg;
 		$('add-media-item-dialog-ok').disabled = false;
 		};
@@ -334,7 +377,7 @@ echo $cable_data['content'];
 		// link
 		mediaItemContainer.grab(new Element('a', {
 			href: response.url,
-			html: response.url + (response.pending ? ' <span style="font-size:smaller">(temporary, until page is reloaded)</span>' : ''),
+			html: response.url + (response.pending ? ' <span style="font-size:smaller">(temporary, until page is reloaded)<\/span>' : ''),
 			styles: {color: response.pending ? 'gray' : ''}
 			}));
 		var removeButton = new Element('img', {
@@ -472,7 +515,7 @@ echo $cable_data['content'];
 				isPerfectMatch = (/^WIKILEAKS_ID-\d+$/.test(response.canonical_id) && isNotPublished) ||
 				                  cable.canonical_id.toUpperCase() === response.canonical_id.toUpperCase();
 				suggestionDIV = new Element('div', {
-					html: '<span>' + cable.canonical_id + '</span><span' + (isNotPublished ? ' class="not-published"' : '') + '>' + cable.subject + '</span>',
+					html: '<span>' + cable.canonical_id + '<\/span><span' + (isNotPublished ? ' class="not-published"' : '') + '>' + cable.subject + '<\/span>',
 					styles: {
 						color: isMe ? 'gray' : '',
 						fontWeight: !isMe && isPerfectMatch ? 'bold' : ''
@@ -582,7 +625,6 @@ echo $cable_data['content'];
 		syncCanonicalIdInput();
 		});
 	}());
-// -->
 </script>
 </body>
 </html>
@@ -590,4 +632,3 @@ echo $cable_data['content'];
 // -----
 db_close_compressed_cache();
 }
-?>
