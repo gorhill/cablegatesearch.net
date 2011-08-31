@@ -26,7 +26,7 @@ $sqlquery = "
 	WHERE
 		o.`id` = {$origin_id}
 	";
-if ( $sqlresult = mysql_query($sqlquery) ) {
+if ( $sqlresult = db_query($sqlquery) ) {
 	if ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$origin = $sqlrow['origin'];
 		}
@@ -120,7 +120,7 @@ $sqlquery = "
 		uc.`cable_time` DESC
 	";
 // printf('<p>%s</p>', $sqlquery);
-if ( $sqlresult = mysql_query($sqlquery) ) {
+if ( $sqlresult = db_query($sqlquery) ) {
 	$current_quarterkey = 0;
 	$current_year = 0;
 	ob_start();
