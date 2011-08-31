@@ -61,6 +61,8 @@ ul.releases {margin-left:0;padding-left:0}
 li.release > ul {margin-top:0.5em}
 li.release > ul > li {display:inline-block;width:18em;font-size:11px;white-space:nowrap;color:darkgreen}
 li.release > ul > li a {color:inherit}
+li.release > ul > li a:hover {opacity:1}
+li.release > ul > li:hover {background-color:#ffd}
 li.release > ul > li:before {content:"\002B\2009"}
 li.release > ul > li.m {color:blue}
 li.release > ul > li.m:before {content:"\2213\2009"}
@@ -145,7 +147,7 @@ $sqlquery = "
 		`period`
 	";
 // printf('<p>explain %s;</p>', $sqlquery);
-if ( $sqlresult = mysql_query($sqlquery) ) {
+if ( $sqlresult = db_query($sqlquery) ) {
 	$changes_per_month = array();
 	$total_num_added = 0;
 	$total_num_modified = 0;
@@ -284,9 +286,11 @@ $sqlquery = "
 	ORDER BY
 		cre.`release_time` DESC,
 		cca.`canonical_id` DESC
+	LIMIT
+		15000
 	";
 // printf('<p>explain %s;</p>', $sqlquery);
-if ( $sqlresult = mysql_query($sqlquery) ) {
+if ( $sqlresult = db_query($sqlquery) ) {
 
 	$CLASSIFICATION_ID_TO_CLASS_MAP = array(
 		'',
@@ -383,6 +387,8 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 <script type="text/javascript">
 <!--
 (function(){
+	var atags = [];
+	var atags_index = 0;
 	var cableTip = null;
 	var cableHovered = null;
 	var tipRequestHandler = function(response) {
@@ -435,24 +441,44 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 			};
 		var jsonRequest=new Request.JSON(options).get(args);
 		};
-	var init = function() {
-		var tip_options = {
+	var tipOnShowHandler = function(tip, hovered) {
+		cableTip = tip;
+		cableHovered = hovered;
+		var subject = hovered.retrieve('tip:text', null);
+		if (subject === '...') {
+			tipRequest(hovered);
+			}
+		tip.setStyle('display','block');
+		};
+	var asyncInit = function() {
+		var atags_count = 250,
+			atags_slice = [],
+			atag;
+		var tipOptions = {
 			showDelay: 500,
 			className: 'cable-tip',
 			fixed: true,
-			onShow: function(tip, hovered) {
-				cableTip = tip;
-				cableHovered = hovered;
-				var subject = hovered.retrieve('tip:text',null);
-				if (subject === '...') {
-					tipRequest(hovered);
-					}
-				tip.setStyle('display','block');
-				}
+			onShow: tipOnShowHandler
 			};
-		var atags = $$('a[href^="cable.php"]');
-		atags.each(function(atag){atag.store('tip:text','...');});
-		cableTip = new Tips(atags,tip_options);
+		while ( atags_count-- ) {
+			atag = atags[atags_index];
+			if (!atag) {break;}
+			atags_slice.push(atag);
+			atag.store('tip:text', '...');
+			atag.target = '_blank';
+			atags_index++;
+			}
+		var dummy = new Tips(atags_slice, tipOptions);
+		if (atags.length && atags_index >= atags.length) {
+			atags = [];
+			}
+		else {
+			setTimeout(asyncInit, 500);
+			}
+		};
+	var init = function() {
+		atags = $$('a[href^="cable.php"]');
+		setTimeout(asyncInit, 500);
 		}
 	window.addEvent('domready',init);
 }());
