@@ -45,6 +45,7 @@ $qexpressions = stringify_expressions($prepdata['expressions'], '-', ' ');
 #search-suggestions > .selected {background:#FFFAE8}
 #search-tips-toggle {margin:0.5em 0 0 0;display:inline-block;font-size:small;cursor:pointer}
 #search-tips {margin:0;padding:0 0 0 2em;font-size:x-small}
+.searchtips-sample {border:1px solid #aaa;padding:0 4px;display:inline-block;font-weight:bold}
 #graph {margin-bottom:1em;border:1px solid #888;background-color:#f4f4f4;font-size:10px}
 #graph tr:first-child td {margin:0;border:0;padding:0;width:5px;vertical-align:bottom}
 #graph tr:first-child td:nth-child(4n+1) {border-left:1px solid #ddd}
@@ -60,6 +61,19 @@ $qexpressions = stringify_expressions($prepdata['expressions'], '-', ' ');
 <meta name="author" content="Raymond Hill">
 <meta name="keywords" content="cablegate, wikileaks, full, text, search">
 <meta name="description" content="A tool allowing you to perform full-text search and browse the leaked cables released by Wikileaks in the Cablegate event">
+<?php
+$canonical_url = 'http://www.cablegatesearch.net/search.php';
+$canonical_url_components = array();
+if ( !empty($prepdata['urlencoded_query']) ) {
+	$canonical_url_components[] = "q={$prepdata['urlencoded_query']}";
+	}
+if ( !$sort ) {
+	$canonical_url_components[] = "sort=0";
+	}
+if ( count($canonical_url_components) ) {
+	$canonical_url .= '?' . implode('&', $canonical_url_components);
+	}
+?><link rel="canonical" href="<?php echo $canonical_url; ?>">
 <?php include('mootools-core-1.3-loader.inc'); ?>
 <!--[if lte IE 8]>
 <style type="text/css">
@@ -74,7 +88,13 @@ $qexpressions = stringify_expressions($prepdata['expressions'], '-', ' ');
 </head>
 <body>
 <h1><?php echo $title; ?></h1>
-<span style="display:inline-block;position:absolute;top:4px;right:0"><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="<?php echo $title, ' #cablegate'; ?>" data-url="http://www.cablegatesearch.net/search.php<?php if ( !empty($prepdata['urlencoded_query']) ) { echo "?q={$prepdata['urlencoded_query']}&sort={$sort}"; } ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
+<span style="display:inline-block;position:absolute;top:4px;right:0"><g:plusone size="medium"></g:plusone><script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script><a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-text="<?php echo $title, ' #cablegate'; ?>">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script></span>
 <?php include('header.php'); ?>
 <div id="main">
 <div id="intro">This site is best viewed using a <a href="http://en.wikipedia.org/wiki/Acid3#Browsers_that_pass">modern, highly-compliant browser</a> <a href="http://acid3.acidtests.org/">(score >= 90)</a><noscript style="color:red">, with Javascript enabled</noscript>. <!--[if lte IE 8]> <span style="color:#c44">Internet Explorer 8 doesn't support all features, visual or otherwise, available on this page.</span> <![endif]--><?php
@@ -89,33 +109,38 @@ $sqlquery = "
 	LIMIT 1	
 	";
 // printf('<p>%s</p>', $sqlquery);
-if ( ($sqlresult = mysql_query($sqlquery)) &&
+if ( ($sqlresult = db_query($sqlquery)) &&
      ($sqlrow = mysql_fetch_row($sqlresult)) ) {
 	$last_time_updated = date('D, j M Y, H:i:00', (int)$sqlrow[0]) . ' UTC';
 	}
 ?>Database content based on a snapshot of <a href="http://<?php echo $WIKILEAKS_HOST; ?>/cablegate.html">Wikileaks' Cablegate</a> as of <span><?php echo $last_time_updated; ?></span> (<span class="since"><?php echo $last_time_updated; ?></span> ago). For more Cablegate resources on the web, see <a href="http://wlcentral.org/">WL Central&rsquo;s</a> <a href="http://wlcentral.org/cablegate">&ldquo;Cablegate Resources&rdquo;</a>. This site is provided as a free service in the name of public interest. I do not seek or accept donations, however I strongly encourage you to <a href="http://wikileaks.org/support.html">financially support Wikileaks</a>.</div>
 <form id="form" method="get" action="search.php">
 <div style="margin-top:1em">
-<div style="margin:0 1em 0 0;display:inline-block;position:relative;vertical-align:top">Keyword(s)<br><input id="q" type="text" value="<?php echo htmlentities($raw_query); ?>" name="q" maxlength="100"><div id="search-suggestions" style="display:none"></div><span id="qexpressions" style="display:none"><?php echo $qexpressions; ?></span><img id="clear-q" style="position:absolute;bottom:4px;right:4px;visibility:<?php echo empty($prepdata['normalized_query']) ? 'hidden' : 'visible'; ?>" src="edit-clear-2.png" width="16" height="16" alt="Reset" title="Reset query/results"></div><span style="margin:0 2em 0 0;display:inline-block;vertical-align:top"><br><input type="submit" value="Retrieve" style="width:6em"></span>&nbsp;<span style="display:inline-block;vertical-align:top">Sort by...<br><input type="radio" name="sort" value="0"<?php if (!$sort) { echo ' checked="checked"'; } ?>>Cable date<br><input type="radio" name="sort" value="1"<?php if ($sort) { echo ' checked="checked"'; } ?>>Publication date</span>
+<div style="margin:0 1em 0 0;display:inline-block;position:relative;vertical-align:top">Keyword(s)<br><input id="q" type="text" value="<?php echo htmlentities($raw_query); ?>" name="q" maxlength="100" style="padding-right:16px"><div id="search-suggestions" style="display:none"></div><span id="qexpressions" style="display:none"><?php echo $qexpressions; ?></span><img id="clear-q" style="position:absolute;bottom:4px;right:4px;visibility:<?php echo empty($prepdata['normalized_query']) ? 'hidden' : 'visible'; ?>" src="edit-clear-2.png" width="16" height="16" alt="Reset" title="Reset query/results"></div><span style="margin:0 1em 0 0;display:inline-block;vertical-align:top">Country<br><select id="qcountry" disabled="disabled"><option value="0">Coming...<?php
+$countries = get_all_countries();
+asort($countries);
+foreach ( $countries as $key => $country ) {
+	echo '<option value="', $key, '">', $country;
+	}
+?></select></span><span style="margin:0 1em 0 0;display:inline-block;vertical-align:top">Sort by...<br><select name="sort"><option value="0"<?php if (!$sort) { echo ' selected="selected"'; } ?>>Cable date<option value="1"<?php if ($sort) { echo ' selected="selected"'; } ?>>Publication date</select></span><span style="margin:0 2em 0 0;display:inline-block;vertical-align:top"><br><input type="submit" value="Retrieve" style="width:6em"></span>
 </div>
 </form>
-<div id="search-tips-toggle">Search tips...</div><ul id="search-tips">
-<li><b>&ldquo;secret&rdquo;</b> will return cables which contain the words <b>&ldquo;secret&rdquo;</b>, <b>&ldquo;secrets&rdquo;</b>, <b>&ldquo;secretary&rdquo;</b>, etc. (starting with)
-<li>Equal (&lsquo;=&rsquo;) prefix: <b>&ldquo;=secret&rdquo;</b> will return cables which contain the word <b>&ldquo;secret&rdquo;</b>, but NOT <b>&ldquo;secrets&rdquo;</b>, <b>&ldquo;secretary&rdquo;</b>, etc. (exact match, per term-based)
-<li>Dash (&lsquo;-&rsquo;) separator: <b>&ldquo;state-secret&rdquo;</b> will return ONLY cables which contain exactly <b>&ldquo;state&rdquo;</b>, IMMEDIATELY followed by <b>&ldquo;secret&rdquo;</b> (exact sequence of words).
+<div><a id="search-tips-toggle" href="#">Search tips...</a></div><ul id="search-tips">
+<li><span class="searchtips-sample">secret</span> will return cables which contain the words <b>&ldquo;secret&rdquo;</b>, <b>&ldquo;secrets&rdquo;</b>, <b>&ldquo;secretary&rdquo;</b>, etc. (starting with)
+<li>Equal (&lsquo;=&rsquo;) prefix: <span class="searchtips-sample">=secret</span> will return cables which contain the word <b>&ldquo;secret&rdquo;</b>, but NOT <b>&ldquo;secrets&rdquo;</b>, <b>&ldquo;secretary&rdquo;</b>, etc. (exact match, per term-based)
+<li>Dash (&lsquo;-&rsquo;) separator: <span class="searchtips-sample">state-secret</span> (or alternately <span class="searchtips-sample">&quot;state secret&quot;</span>) will return ONLY cables which contain exactly <b>&ldquo;state&rdquo;</b>, IMMEDIATELY followed by <b>&ldquo;secret&rdquo;</b> (exact sequence of words).
 <li>When searching for more than one word, only cables matching (as per above) <b>all</b> the words are returned.
-<li>Example: searching for <a style="font-weight:bold" href="search.php?q=state+secret">&ldquo;state secret&rdquo;</a> returns 1153 cables, <a style="font-weight:bold" href="search.php?q=state+%3dsecret">&ldquo;state =secret&rdquo;</a> returns 674 cables, <a style="font-weight:bold" href="search.php?q=%3dstate+%3dsecret">&ldquo;=state =secret&rdquo;</a> returns 543 cables, <a style="font-weight:bold" href="search.php?q=state-secret">&ldquo;state-secret&rdquo;</a> returns 2 cables (as of Dec. 28, 2010).
-<li>Leading zeros in numbers are disregarded, i.e., when searching for <b>&ldquo;51&rdquo;</b>, cables with <b>&ldquo;51&rdquo;</b>, but also <b>&ldquo;051&rdquo;</b>, <b>&ldquo;00000051&rdquo;</b>, etc. will be returned.
+<li>Example: searching for <a class="searchtips-sample" href="search.php?q=state+secret">state secret</a> returns 1153 cables, <a class="searchtips-sample" href="search.php?q=state+%3dsecret">state =secret</a> returns 674 cables, <a class="searchtips-sample" href="search.php?q=%3dstate+%3dsecret">=state =secret</a> returns 543 cables, <a class="searchtips-sample" href="search.php?q=state-secret">state-secret</a> returns 2 cables (as of Dec. 28, 2010).
+<li>Leading zeros in numbers are disregarded, i.e., when searching for <span class="searchtips-sample">51</span>, cables with <b>&ldquo;51&rdquo;</b>, but also <b>&ldquo;051&rdquo;</b>, <b>&ldquo;00000051&rdquo;</b>, etc. will be returned.
 </ul>
 <div style="margin:1em 0 1em 0;border-top:1px solid #aaa;height:1px"></div>
 <?php
-
 
 // obtain total number of entries matching this subquery
 // *outside* any specific time range
 $num_cables_no_time_range = 0;
 $sqlquery = "SELECT count(*) FROM {$prepdata['subquery']}";
-if ( $sqlresult = mysql_query($sqlquery) ) {
+if ( $sqlresult = db_query($sqlquery) ) {
 	$num_cables_no_time_range = intval(mysql_result($sqlresult, 0));
 	}
 
@@ -124,16 +149,16 @@ if ( $sqlresult = mysql_query($sqlquery) ) {
 $column_names_lookup_by_sort = array('cable','change');
 if ( $yt < $year_upper_limit || $mt < $month_upper_limit ) {
 	$num_cables_no_limit = 0;
-	$sqlquery = sprintf(
+	$sqlquery = 
 		  "SELECT count(*) "
 		. "FROM {$prepdata['subquery']} "
-		. "WHERE c.`%s_time` < UNIX_TIMESTAMP(DATE_ADD('%d-%02d-01',INTERVAL 1 MONTH))"
-		,
-		$column_names_lookup_by_sort[$sort],
-		$yt,
-		$mt
-		);
-	if ( $sqlresult = mysql_query($sqlquery) ) {
+		. sprintf("WHERE c.`%s_time` < UNIX_TIMESTAMP(DATE_ADD('%d-%02d-01',INTERVAL 1 MONTH))"
+			,
+			$column_names_lookup_by_sort[$sort],
+			$yt,
+			$mt
+			);
+	if ( $sqlresult = db_query($sqlquery) ) {
 		$num_cables_no_limit = intval(mysql_result($sqlresult, 0));
 		}
 	}
@@ -149,17 +174,11 @@ $query = sprintf(
 	.     "c.`cable_time`,"
 	.     "c.`change_time`,"
 	.     "c.`status`,"
-	.     "cl.`classification`,"
-	.     "o.`origin`,o.`country_id`,"
+	.     "c.`origin_id`,"
+	.     "c.`classification_id`,"
 	.     "c.`subject` "
 	. "FROM "
-	.     "`cablegate_classifications` cl "
-	.     "INNER JOIN ("
-	.         "`cablegate_origins` o "
-	.         "INNER JOIN %s "
-	.         "ON o.`id` = c.`origin_id`"
-	.         ") "
-	.     "ON cl.`id` = c.`classification_id` "
+	.     "%s "
 	,
 	$prepdata['subquery']
 	);
@@ -186,7 +205,7 @@ $query .= sprintf(
 	);
 // printf("<p>%s</p>", $query);
 
-$result = mysql_query($query);
+$result = db_query($query);
 if (!$result) {
 	exit(mysql_error());
 	}
@@ -285,10 +304,10 @@ echo '<tr>', $xaxis_label_html;
 </table>
 <?php } ?>
 <table id="cable-list" cellspacing="0" cellpadding="0">
-<tr><th><th>Cable date<th><a class="cartTogglerInfo" href="/cart.php"></a>Subject &mdash; Origin<th>Updated<br>... ago
+<tr><th><th>Cable date<th><a class="cartTogglerInfo" href="/cart.php" title="Marked items are in your private cart. Click here to see the content of your private cart."></a>Subject &mdash; Origin<th>Updated<br>... ago
 <?php
 include_once('cablegate-functions.php');
-echo cables2rows($result);
+echo cables2rows($result, $sort);
 
 $num_cables_left = $num_cables_no_limit - $num_cables;
 if ($num_cables_left) {
