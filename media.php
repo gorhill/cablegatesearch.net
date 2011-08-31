@@ -18,6 +18,16 @@ db_open_compressed_cache($cache_id);
 #media-tree span.expandable {margin:0 4px 0 0;display:inline-block;width:11px;height:11px;background:no-repeat left bottom;cursor:pointer}
 #media-tree span.expandable.collapsed {background-image:url('open.png')}
 #media-tree span.expandable.expanded {background-image:url('close.png')}
+#media-tree > li > span:first-child + span {padding:1px 0;display:inline-block;line-height:110%}
+#media-tree span.cc0 {font-size:12px}
+#media-tree span.cc1 {font-size:14px}
+#media-tree span.cc2 {font-size:16px}
+#media-tree span.cc3 {font-size:18px}
+#media-tree span.cc4 {font-size:20px}
+#media-tree span.cc5 {font-size:24px}
+#media-tree span.cc6 {font-size:26px}
+#media-tree span.cc7 {font-size:28px}
+#media-tree span.cc8 {font-size:30px}
 #media-tree ul {margin:4px 0 0.5em 0}
 #media-tree > li > ul > li > ul > li > a {font-variant:small-caps;color:#444}
 </style>
@@ -54,10 +64,10 @@ $sqlquery = "
 		u.`url`,
 		c.`canonical_id`
 	";
-if ( $sqlresult = mysql_query($sqlquery) ) {
+if ( $sqlresult = db_query($sqlquery) ) {
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
-		if ( preg_match('!http://(www\\d*\\.)?(.*?)(/|$)!', $sqlrow['url'], $matches) ) {
-			$host = $matches[2];
+		if ( preg_match('!http://(www\\d*\\.)?(wikileaks\\.)?(.*?)(/|$)!i', $sqlrow['url'], $matches) ) {
+			$host = $matches[3];
 			}
 		else {
 			$host = 'Unknown';
@@ -90,7 +100,7 @@ $sqlquery = "
 	GROUP BY
 		ua.`cable_id`
 	";
-if ( $sqlresult = mysql_query($sqlquery) ) {
+if ( $sqlresult = db_query($sqlquery) ) {
 	$num_source_cables = mysql_num_rows($sqlresult);
 	}
 ?>
@@ -102,7 +112,10 @@ Media tree is structured as follow: Media sources &rarr; Media items &rarr; Cabl
 <?php
 $host_id = 1;
 foreach ( $hosts as $host => $urls ) {
-	echo '<li class="host" id="host-', $host_id, '"><span class="expandable collapsed"></span><span>', htmlentities($host), '</span> (', number_format(count($urls)), ')<ul class="media-items" style="display:none"><li style="color:gray">Retrieving...</li></ul>';
+	$count = count($urls);
+	$count_class_no = min(intval($count/20), 8);
+	$count_class = sprintf(' class="cc%d"', $count_class_no);
+	echo '<li class="host" id="host-', $host_id, '"><span class="expandable collapsed"></span><span', $count_class, '>', htmlentities($host), ' (', number_format($count), ')</span><ul class="media-items" style="display:none"><li style="color:gray">Retrieving...</li></ul>';
 	$host_id++;
 	}
 ?>
@@ -308,8 +321,8 @@ foreach ( $hosts as $host => $urls ) {
 		var spanHost = parentHost.getElement('span.expandable + span');
 		var args = {
 			command: 'get_media_items_from_host',
-			media_host: spanHost.innerHTML,
-			media_host_id: parseInt(/\d+$/.exec(parentHost.id),10)
+			media_host: /[\w\.]+/.exec(spanHost.innerHTML)[0],
+			media_host_id: parseInt(/\d+$/.exec(parentHost.id)[0],10)
 			};
 		var dummy = new Request.JSON(reqMediaItemsOptions).get(args);
 		};
