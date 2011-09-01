@@ -1114,6 +1114,7 @@ function array_flatten($aa) {
 					}
 				$r[$s] = true;
 				}
+
 /* This version search losely on the last term, not sure if it's better..
 			$ilast = count($as) - 1;
 			foreach ( $as as $i => $s ) {
