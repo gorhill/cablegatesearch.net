@@ -179,10 +179,10 @@ FILES
 	MySQL statements to create the structure of the
 	tables required to run the site
 
-- cablegatesearch-create-and-populate-201108290338.sql.7z:
+- cablegatesearch-create-and-populate-all.sql.7z:
 	MySQL statements to create the structures of the
 	tables required to run this site, and to fill them with the data
 	of the latest snapshot of released cables. Since this file is
-	way too large to host here (currently ~660MB), download it using this
+	way too large to host here (currently ~1GB), download it using this
 	torrent magnet:
-	magnet:?xt=urn:btih:d16446ab759bf49643de9fc96fe402e4cb5e41b5&dn=cablegatesearch-create-and-populate-201108290338.sql.7z&tr=http%3A%2F%2Ftracker.openbittorrent.com%3A80
+	magnet:?xt=urn:btih:753c465276ea16465581df723abae965357fe2f0&dn=cablegatesearch-create-and-populate-all.sql.7z&tr=http%3A%2F%2Ftracker.openbittorrent.com%3A80
