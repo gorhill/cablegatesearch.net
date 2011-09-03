@@ -14,7 +14,7 @@ if ( isset($_REQUEST['tags']) && preg_match('/^\\d+(,\\d+)*$/',$_REQUEST['tags']
 	}
 $cache_id = "browse_" . implode('-',$stack_of_tags);
 if ( !db_output_compressed_cache($cache_id) ) {
-if ( count($stack_of_tags) < 3 ) { db_open_compressed_cache($cache_id); }
+if ( count($stack_of_tags) < 2 ) { db_open_compressed_cache($cache_id); }
 // -----
 $MAX_COUNT = 300;
 $MAX_FONTSIZE = 48;
@@ -84,15 +84,35 @@ if ( count($stack_of_tags) > 0 ) {
 
 if ( $nTags > 0 ) {
 	// create an sql query to intersect all sets of cables obtained from each tag from the tag stacks
-	$subquery = "select cable_id from cablegate_tagassoc where tag_id={$stack_of_tags[0]}";
-	for ( $iTag = 1; $iTag < $nTags; $iTag++ ) {
-		$subquery = "select a.cable_id from (select cable_id from cablegate_tagassoc where tag_id={$stack_of_tags[$iTag]}) a inner join ({$subquery}) b on a.cable_id = b.cable_id";
+	$subqueries = array();
+	foreach ( $stack_of_tags as $tag_id ) {
+		$subqueries[] = "select `cable_id` from `cablegate_tagassoc` where `tag_id`={$tag_id}";
 		}
-	$subquery = "select tag_id,count(cable_id) as num_cables from (select a.tag_id,a.cable_id from cablegate_tagassoc a inner join ({$subquery}) b on b.cable_id = a.cable_id) a where tag_id not in({$STRINGIFIED_TAGIDS_TO_IGNORE},{$stringified_stack_of_tags}) group by tag_id";
+	$subquery = sprintf(
+		  "select tag_id, count(cable_id) as num_cables "
+		. "from ("
+		.     "select a.tag_id, a.cable_id "
+		.     "from cablegate_tagassoc a "
+		.     "inner join ("
+		.         "select * "
+		.         "from ("
+		.             "%s"
+		.             ") a "
+		.         "group by `cable_id` "
+		.         "having count(`cable_id`)=%d"
+		.         ") b "
+		.     "on b.cable_id = a.cable_id "
+		.     ") a "
+		. "where tag_id not in ({$STRINGIFIED_TAGIDS_TO_IGNORE},{$stringified_stack_of_tags}) "
+		. "group by tag_id"
+		,
+		implode(' union all ', $subqueries),
+		count($subqueries)
+		);
 
 	// first determine min,max for proper scaling
 	$sqlquery = "select max(a.num_cables) as `max_num_cables`,min(a.num_cables) as `min_num_cables` from ({$subquery}) a";
-	//printf("<p>{$sqlquery}</p>");
+	//printf("<ul><li>%s<ul><li>{$sqlquery}</ul></ul>", mysql_error());
 	$sqlresult = db_query($sqlquery);
 	$sqlrow = mysql_fetch_assoc($sqlresult);
 	$max_num_cables = (int)$sqlrow['max_num_cables'];
@@ -143,7 +163,7 @@ if ( $nTags > 0 ) {
 
 	// compute number of cables per tags
 	$sqlquery = "select t.`id`,t.`type`,t.`tag`,a.`num_cables`,if(char_length(t.`definition`)!=0,t.`definition`,t.`tag`) as `definition` from `cablegate_tags` t inner join ({$subquery}) a on a.`tag_id` = t.`id` order by `definition`";
-	//printf("<p>{$sqlquery}</p>");
+	//printf("<ul><li>%s<ul><li>{$sqlquery}</ul></ul>", mysql_error());
 	$sqlresult = db_query($sqlquery);
 	while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 		$num_cables = (int)$sqlrow['num_cables'];
@@ -189,6 +209,7 @@ else {
 		$range = $max_num_cables - $min_num_cables;
 
 		$sqlquery = "select t.id,t.`type`,t.tag,ta.num_cables,if(char_length(t.definition)!=0,t.definition,t.tag) as `definition` from `cablegate_tags` t inner join (select `tag_id`,count(`cable_id`) as `num_cables` from `cablegate_tagassoc` group by `tag_id` order by `num_cables` desc) ta on ta.tag_id = t.id where t.type={$type} order by `definition`";
+		//printf("<ul><li>%s<ul><li>{$sqlquery}</ul></ul>", mysql_error());
 		$sqlresult = db_query($sqlquery);
 		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 			$num_cables = (int)$sqlrow['num_cables'];
