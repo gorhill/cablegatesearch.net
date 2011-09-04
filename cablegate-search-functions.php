@@ -164,7 +164,7 @@ class Cablegate_Indexer {
 		// if a time value is provided, use it against `change_time` to
 		// determine which cables need reindexing, otherwise only reindex cables
 		// which are not indexed at all
-		$sqlquery = "SELECT c.`id` FROM `cablegate_cables` c ";
+		$sqlquery = "SELECT c.`id` FROM `cablegate_cables` c ORDER BY c.`id`";
 		if ( $starttime !== 0 ) {
 			if ( $starttime !== PHP_INT_MAX ) {
 				$sqlquery = $sqlquery
@@ -194,7 +194,7 @@ class Cablegate_Indexer {
 			$max_cable_id = max($this->cable_ids);
 			$sqlquery = "SELECT `id`,`hash` "
 				      . "FROM `cablegate_contents` "
-				      . "WHERE `id` >= {$min_cable_id} AND `id` <={$max_cable_id}";
+				      . "WHERE `id` >= {$min_cable_id} AND `id` <= {$max_cable_id}";
 			if ( $sqlresult = db_query($sqlquery) ) {
 				while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
 					$cable_id = intval($sqlrow['id']);
@@ -233,9 +233,11 @@ class Cablegate_Indexer {
 		$expression_hashes = array();
 
 		// first analyze text to index
-		printf("\nAnalyzing contents of all cables...");
+		printf("\nAnalyzing contents of all cables...\n");
 
 		foreach ( $this->cable_ids as $cable_id ) {
+			printf("Indexing %d\r", $cable_id);
+
 			$cable_fields = $this->get_searchable_fields($cable_id);
 
 			// TODO: preload all outside loop?
@@ -264,6 +266,8 @@ class Cablegate_Indexer {
 
 			$this->gather_one($cable_id, $text_to_index);
 			}
+
+		printf("\n");
 		}
 
 	private function gather_one($cable_id, $text) {
