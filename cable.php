@@ -79,7 +79,7 @@ del {color:#a00;background:#fdd;text-decoration:none}
 ins {color:#080;background:#dfd;text-decoration:none}
 .cl-s {color:red}
 .cl-c {color:#e47800}
-#disqus_section {margin:0;padding:0;max-width:720px}
+#disqus_section {margin:0 0 4em 0;padding:0;max-width:720px;opacity:0.5}
 #disqus_section #disqus_thread {margin:0;padding:0}
 @media only screen and (min-width:740px) and (max-width:1149px) {
 	#cable {min-width:720px}
@@ -89,8 +89,9 @@ ins {color:#080;background:#dfd;text-decoration:none}
 	#cable {display:inline-block;min-width:720px}
 	#disqus_section {display:inline-block;width:420px;vertical-align:top}
 	#disqus_section #dsq-content #dsq-global-toolbar {margin:0}
-	#goto-comments-prompt {display:none}
+	#disqus_goto_comments {display:none}
 	}
+#disqus_section:hover {opacity:1}
 </style>
 <?php include('mootools-core-1.3-loader.inc'); ?>
 <script src="mootools-more.js" type="text/javascript"></script>
@@ -231,7 +232,7 @@ if ( $sqlresult = db_query($sqlquery) ) {
 	<button id="add-media-item-dialog-cancel">Close</button> <button id="add-media-item-dialog-ok">Add</button>
 	<div style="margin-top:2em;font-size:smaller"><label>Contributor key (optional): </label><input id="add-media-item-dialog-contributor-key" type="text" size="32" maxlength="32" style="font-size:inherit">	<div style="color:gray">If no contributor key is supplied, submitted URLs will have to be vouched by the webmaster before appearing in the list. If an invalid contributor key is supplied, the submitted URL will be ignored. If a valid contributor key is supplied, the submitted URL will be immediately associated with the cable and visible to other visitors.<br>To obtain a valid contributor key, <a href="mailto:rhill@cablegatesearch.net?subject=cablegatesearch.net:%20Re.%20contributor key">email me</a>. (I welcome media representatives, authors, writers, etc.)</div></div>
 	</div>
-<tr id="goto-comments-prompt"><td>Comments<td>You can <a href="#disqus_thread">comment on this cable</a>.
+<tr id="disqus_goto_comments"><td>Comments<td><a href="#disqus_thread" data-disqus-identifier="<?php echo $canonical_id; ?>">? Comments</a>
 </table>
 </div><!-- end cable summary -->
 <div class="cable-content"><!-- cable content --><div id="cable-header"><!-- header --><?php
@@ -241,8 +242,8 @@ echo $cable_data['content'];
 ?></div><!-- end body --></div><!-- end cable content -->
 </div><!-- end cable -->
 <div id="disqus_section">
-	<p style="margin-top:0;font-size:smaller;color:#a66">User-supplied content reflect the views of their respective authors, and not necessarily the view of the owner and moderator(s) of this web site. Posts with embedded links will have to be approved by a moderator. Only links to external web pages which <i>appear</i> to contribute complementary information to specifics in the cable will be allowed. Links to external web pages should not be construed as a statement of support of the external web sites by the owner and/or moderator(s) of cablegatesearch.net.</p>
-	<button id="disqus_show_comments" style="margin:0 0 1em 0;border:1px solid gray;font-size:small">Show comments</button>
+	<p style="margin:0 0 1em 0;font-size:smaller;color:#a66">User-supplied content reflect the views of their respective authors, and not necessarily the view of the owner and moderator(s) of this web site. Posts with embedded links will have to be approved by a moderator. Only links to external web pages which <i>appear</i> to contribute complementary information to specifics in the cable will be allowed. Links to external web pages should not be construed as a statement of support of the external web sites by the owner and/or moderator(s) of cablegatesearch.net.</p>
+	<a id="disqus_show_comments" style="margin:1em 0 2em 0;border:1px solid gray;padding:4px 8px;background:#eee;font-size:small" href="#disqus_thread" data-disqus-identifier="<?php echo $canonical_id; ?>">? Comments</a>
 	<div id="disqus_thread"></div>
 	<script type="text/javascript">
 		/* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
@@ -258,15 +259,25 @@ echo $cable_data['content'];
 				dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
 				(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
 				};
+			disqus_show_comments();
+/*
 			if (/^#comment-\d+$/.test(window.location.hash)) {
 				disqus_show_comments();
 				}
 			else {
+				$('disqus_goto_comments').addEvent('click', disqus_show_comments);
 				$('disqus_show_comments').addEvent('click', disqus_show_comments);
 				}
-			})();
+*/			})();
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+	    }());
 	</script>
-	<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+	<noscript><p>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></p></noscript>
 	</div>
 <?php } ?>
 </div><!-- end main -->
