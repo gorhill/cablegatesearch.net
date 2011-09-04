@@ -189,7 +189,7 @@
 		if (co.suggestionKeyupTimer) {
 			window.clearTimeout(co.suggestionKeyupTimer);
 			}
-		co.suggestionKeyupTimer = window.setTimeout(keyupTimerHandler,250);
+		co.suggestionKeyupTimer = window.setTimeout(keyupTimerHandler,500);
 		};
 
 	var keyupHandler = function(event) {
