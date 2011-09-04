@@ -11,7 +11,7 @@
 	.crowdpane {display:inline-block;width:49%}
 	}
 #canonicalid-suggestions {margin:0 0 0 1em;border:1px groove gray;padding:3px;width:80%;color:gray;background:#DFDDF0}
-#canonicalid-suggestions > div {padding:1px;color:black;cursor:pointer;white-space:nowrap;overflow:hidden}
+#canonicalid-suggestions > div {padding:1px;color:black;white-space:nowrap;overflow:hidden}
 #canonicalid-suggestions > div:hover {background:#FFFAE8}
 #canonicalid-suggestions > div > span:first-child {margin:0 1em 0 0;display:inline-block;min-width:12em}
 #canonicalid-suggestions > div > a {margin:0 1em 0 0;display:inline-block;min-width:12em}
@@ -91,7 +91,7 @@
 
 	<ul>
 		<li>Official reference id (ex.: &ldquo;10BEIJING207&rdquo;);
-		<li>WL's all-digit internal id (ex.: &ldquo;245489&rdquo;. Id values were inferred from <a href="http://www.guardian.co.uk/news/datablog/2010/nov/29/wikileaks-cables-data#data">The Guardian&rsquo;s CSV file</a>: rows were sorted by date, then origin, then tags);
+		<li>The all-digit cable id  (ex.: &ldquo;245489&rdquo;);
 		<li>Any text which contains a reference to a cable somewhere in it (ex.: &ldquo;http://wikileaks.org/cable/2010/01/10BEIJING207.html&rdquo;);
 		</ul>
 	</p>
@@ -235,5 +235,6 @@
 	}());
 // -->
 </script>
+<?php include('footer.php'); ?>
 </body>
 </html>
