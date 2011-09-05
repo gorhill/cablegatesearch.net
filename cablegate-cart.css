@@ -1,4 +1,4 @@
-div.cartToggler,.cartTogglerInfo {margin:0 0 0 4px;padding:0;border:0;display:inline-block;float:right;top:0;right:0;width:16px;height:16px;background:transparent no-repeat scroll right top}
+div.cartToggler,.cartTogglerInfo {margin:0 0 0 4px;padding:0;border:0;display:inline-block;float:right;top:0;right:0;width:16px;height:16px;background:transparent no-repeat scroll right top;cursor:pointer}
 div.cartToggler {background-image:url('bookmark-ghost.png')}
 div.cartToggler.inCart {background-image:url('bookmark.png')}
 *[id^="cableid-"]:hover div.cartToggler {background-image:url('bookmark-add.png');opacity:0.5}

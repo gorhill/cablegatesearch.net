@@ -25,7 +25,7 @@ a[href^="http"] {padding:0 12px 0 0;background:url(external-link.png) center rig
 .struck {text-decoration:line-through;}
 .webmaster-comment {color:gray;font:italic 12px sans-serif}
 .cable-content a {color:#66F}
-.cable-content a[href^="search.php"] {padding-right:14px;background:transparent url('./images/magnifier.png') no-repeat right center}
+a[href^="search.php"] {padding-right:14px;background:transparent url('./images/magnifier.png') no-repeat right center}
 .hilite {padding:0 1px;font-weight:bold;background-color:#ff8}
 .hilite-with-focus {border:1px dotted red;padding:0;font-weight:bold;background-color:#ff8}
 .tip {border:1px solid gray;padding:4px 8px;font-size:12px;background-color:#fffff8;border-radius:6px;-moz-border-radius:6px}

@@ -79,7 +79,7 @@ del {color:#a00;background:#fdd;text-decoration:none}
 ins {color:#080;background:#dfd;text-decoration:none}
 .cl-s {color:red}
 .cl-c {color:#e47800}
-#disqus_section {margin:0 0 4em 0;padding:0;max-width:720px;opacity:0.5}
+#disqus_section {margin:0 0 4em 0;padding:0;max-width:720px;opacity:0.25}
 #disqus_section #disqus_thread {margin:0;padding:0}
 @media only screen and (min-width:740px) and (max-width:1149px) {
 	#cable {min-width:720px}
@@ -260,16 +260,7 @@ echo $cable_data['content'];
 				(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
 				};
 			disqus_show_comments();
-/*
-			if (/^#comment-\d+$/.test(window.location.hash)) {
-				disqus_show_comments();
-				}
-			else {
-				$('disqus_goto_comments').addEvent('click', disqus_show_comments);
-				$('disqus_show_comments').addEvent('click', disqus_show_comments);
-				}
-*/			})();
-    /* * * DON'T EDIT BELOW THIS LINE * * */
+			})();
     (function () {
         var s = document.createElement('script'); s.async = true;
         s.type = 'text/javascript';
