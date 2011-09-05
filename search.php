@@ -53,6 +53,7 @@ $qexpressions = stringify_expressions($prepdata['expressions'], '-', ' ');
 #graph tr:first-child a.in {border-left:1px solid #99f;background-color:#88f}
 #graph tr:first-child + tr > td {border-top:1px solid #aaa;border-left:1px solid #ddd;color:#aaa}
 #graph tr:first-child + tr > td a {color:#000}
+#graph a[href^="search.php"] {padding:0;background-image:none}
 #get-next-cables button {border:1px solid;border-collapse:collapse;border-color:#ddd #888 #888 #ddd}
 </style>
 <title><?php echo $title; ?></title>

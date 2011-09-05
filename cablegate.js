@@ -444,8 +444,8 @@ if (!CablegateObject) {
 		cablerows.each(function(tr){co.initCableRow(tr);});
 		// external links in new tab to preserve search results
 		$$('a[href^="http"]').each(function(a){a.target='_blank';});
-		// auto-expand first cable if only one cable or if keyword(s)
-		if (cablerows.length>0 && co.qTerms){
+		// auto-expand first cable if only one cable [or if keyword(s)]
+		if (cablerows.length===1 /*&& co.qTerms*/){
 			co.cableExpand(cablerows[0].id.substr(8));
 			}
 		// assign click handler for requesting more results
