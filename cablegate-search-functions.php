@@ -164,21 +164,22 @@ class Cablegate_Indexer {
 		// if a time value is provided, use it against `change_time` to
 		// determine which cables need reindexing, otherwise only reindex cables
 		// which are not indexed at all
-		$sqlquery = "SELECT c.`id` FROM `cablegate_cables` c ORDER BY c.`id`";
+		$sqlquery = "SELECT c.`id` FROM `cablegate_cables` c ";
 		if ( $starttime !== 0 ) {
 			if ( $starttime !== PHP_INT_MAX ) {
 				$sqlquery = $sqlquery
-						  . "WHERE c.`change_time` >= {$starttime}"
+						  . "WHERE c.`change_time` >= {$starttime} "
 						  ;
 				}
 			else {
 				$sqlquery = $sqlquery
 						  . "LEFT JOIN `cablegate_contents` co "
 						  . "ON c.`id` = co.`id` "
-						  . "WHERE co.`id` IS NULL"
+						  . "WHERE co.`id` IS NULL "
 						  ;
 				}
 			}
+		$sqlquery .= "ORDER BY c.`id`";
 		$sqlresult = db_query($sqlquery);
 		assert($sqlresult);
 		while ( $sqlrow = mysql_fetch_assoc($sqlresult) ) {
