@@ -14,6 +14,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
 
+rhill 2012-02-27 Important note: Files here no longer reflect
+cablegatesearch.net in its present state, much work as been performed since
+the last commit to enhance significantly performance, add features, and
+restructure the site. This has been true for a while, I just thought I should
+leave a note here for your information.
+
 WHAT IS THIS?
 -------------
 
@@ -42,6 +48,15 @@ This website's code has been developed on:
 - Apache/2.2.16 (Ubuntu)
 - PHP 5.3.3-1ubuntu9.3
 - MySQL 5.1.49
+
+The footprint is rather smallish, but you might want to adjust the
+cacher's settings in cacher.php:
+  $CACHER_MAXITEMS_LO = 29000;
+  $CACHER_MAXITEMS_HI = 30000;
+These indicate the max number of files in the cache directory. When
+the number of files is higher than $CACHER_MAXITEMS_HI, oldest files
+will be deleted so that no more than $CACHER_MAXITEMS_LO are left in
+the cache.
 
 
 FILES
