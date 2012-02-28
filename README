@@ -20,6 +20,10 @@ the last commit to enhance significantly performance, add features, and
 restructure the site. This has been true for a while, I just thought I should
 leave a note here for your information.
 
+rhill 2012-02-28: Forgot the most important information: 
+cablegatesearch-create-and-populate-all.sql.7z still contains the redacted
+versions of cables, while the web site contains all the cables, non redacted.
+
 WHAT IS THIS?
 -------------
 
